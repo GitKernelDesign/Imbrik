@@ -1,0 +1,5 @@
+# Les exécutables sont trop volumineux pour Git : ils sont publiés dans les releases GitHub
+*.exe
+*.AppImage
+*.dmg
+*.msi
