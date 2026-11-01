@@ -30,4 +30,4 @@ La version 1.4.2 est disponible dans les [releases](https://github.com/GitKernel
 
 ## Licence
 
-Voir le fichier [LICENSE](LICENSE).
+Imbrik est distribué sous licence **GNU Affero General Public License v3.0 (AGPLv3)**. Voir le fichier [LICENSE](LICENSE) pour le texte complet.
