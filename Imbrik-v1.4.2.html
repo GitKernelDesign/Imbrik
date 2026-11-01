@@ -1,0 +1,2362 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<title>IMBRIK - Optimiseur de Découpe</title>
+<style>
+  :root {
+    --bg: #eef1f6;
+    --bg-gradient: linear-gradient(160deg, #eef1f6 0%, #e4e9f2 50%, #dde4ef 100%);
+    --panel: #ffffff;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --text: #0f172a;
+    --text-secondary: #334155;
+    --muted: #64748b;
+    --muted-light: #94a3b8;
+    --accent: #6366f1;
+    --accent-dark: #4f46e5;
+    --accent-light: #eef2ff;
+    --accent-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    --danger: #ef4444;
+    --danger-light: #fef2f2;
+    --ok: #10b981;
+    --ok-light: #ecfdf5;
+    --warn-bg: #fffbeb;
+    --warn-border: #f59e0b;
+    --warn-text: #92400e;
+    --header-bg: #0f172a;
+    --header-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+    --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+    --radius-sm: 6px;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+    --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg-gradient);
+    background-attachment: fixed;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ============ Header ============ */
+  header {
+    background: var(--header-gradient);
+    color: #fff;
+    padding: 0 24px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08);
+    backdrop-filter: blur(12px);
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-logo {
+    width: 38px;
+    height: 38px;
+    background: var(--accent-gradient);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+  }
+
+  .header-logo svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  header h1 {
+    font-size: 17px;
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  header h1 .version {
+    font-weight: 500;
+    font-size: 12px;
+    color: #818cf8;
+    margin-left: 4px;
+    padding: 2px 7px;
+    background: rgba(99, 102, 241, 0.15);
+    border-radius: 20px;
+    vertical-align: 2px;
+  }
+
+  header .sub {
+    color: #94a3b8;
+    font-size: 11.5px;
+    line-height: 1.4;
+  }
+
+  header .actions {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    position: relative;
+  }
+
+  /* ============ Buttons ============ */
+  button {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text-secondary);
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: inherit;
+    transition: all var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  button:hover {
+    background: #f8fafc;
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  button:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-xs);
+  }
+
+  button.primary {
+    background: var(--accent-gradient);
+    border-color: transparent;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35), 0 1px 3px rgba(99, 102, 241, 0.2);
+    letter-spacing: 0.01em;
+  }
+
+  button.primary:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45), 0 2px 6px rgba(99, 102, 241, 0.25);
+    transform: translateY(-2px);
+  }
+
+  button.primary:active {
+    transform: translateY(0);
+  }
+
+  button.icon {
+    padding: 3px 9px;
+    color: var(--danger);
+    font-weight: 600;
+    font-size: 15px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    line-height: 1;
+  }
+
+  button.icon:hover {
+    background: var(--danger-light);
+    color: #dc2626;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* ============ Burger menu ============ */
+  .burger {
+    width: 42px;
+    height: 38px;
+    padding: 0;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius-sm);
+  }
+
+  .burger:hover {
+    background: rgba(255,255,255,0.14);
+    border-color: rgba(255,255,255,0.2);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .burger span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    transition: all var(--transition);
+  }
+
+  /* ============ Dropdown menu ============ */
+  .menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    padding: 6px;
+    z-index: 200;
+    min-width: 240px;
+    flex-direction: column;
+    transform-origin: top right;
+    animation: menuIn 0.15s ease-out;
+  }
+
+  @keyframes menuIn {
+    from { opacity: 0; transform: scale(0.95) translateY(-4px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .menu.open { display: flex; }
+
+  .menu button {
+    border: none;
+    background: none;
+    text-align: left;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    width: 100%;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .menu button:hover {
+    background: var(--accent-light);
+    color: var(--accent-dark);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .menu button .mi {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+
+  .menu button:hover .mi {
+    opacity: 1;
+  }
+
+  .menu a.menu-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--accent);
+    font-weight: 600;
+    border-top: 1px solid var(--border);
+    margin: 6px -6px 0;
+    padding: 10px 12px;
+    text-align: left;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    font-size: 13px;
+    transition: all var(--transition);
+  }
+
+  .menu a.menu-link:hover {
+    background: var(--accent-light);
+    color: var(--accent-dark);
+  }
+
+  .menu a.menu-link .mi {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  /* ============ Main layout ============ */
+  main {
+    display: grid;
+    grid-template-columns: 520px 1fr;
+    gap: 20px;
+    padding: 20px 24px;
+    align-items: start;
+    max-width: 1800px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 1120px) {
+    main { grid-template-columns: 1fr; padding: 16px; }
+  }
+
+  #left-col {
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 96px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+    padding-right: 2px;
+  }
+
+  #left-col::-webkit-scrollbar { width: 5px; }
+  #left-col::-webkit-scrollbar-track { background: transparent; }
+  #left-col::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+
+  @media (max-width: 1120px) {
+    #left-col { position: static; max-height: none; overflow: visible; }
+  }
+
+  /* ============ Panels ============ */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 18px 14px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition);
+  }
+
+  .panel:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .panel h2 {
+    font-size: 12px;
+    margin: 0 0 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel h2::before {
+    content: "";
+    width: 3px;
+    height: 14px;
+    background: var(--accent-gradient);
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  /* ============ Tables ============ */
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  th, td {
+    padding: 5px 6px;
+    text-align: left;
+  }
+
+  th {
+    font-size: 10.5px;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr {
+    transition: background var(--transition);
+  }
+
+  tbody tr:hover {
+    background: #f8fafc;
+  }
+
+  .row-table td {
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* ============ Stock : cartes panneau (libellé en haut, champs en grille) ============ */
+  /* ============ Cartes (stock & pièces) : libellé en haut, champs en grille ============ */
+  .stock-list,
+  .parts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .stock-item,
+  .part-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: #f8fafc;
+    transition: box-shadow var(--transition);
+  }
+
+  .stock-item:hover,
+  .part-item:hover {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .stock-item .stock-head,
+  .part-item .part-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stock-item .stock-head input,
+  .part-item .part-head input {
+    flex: 1;
+    font-weight: 600;
+    font-size: 13px;
+    border: 1px solid transparent;
+    background: transparent;
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+  }
+
+  .stock-item .stock-head input:hover,
+  .part-item .part-head input:hover {
+    border-color: var(--border);
+  }
+
+  .stock-item .stock-head input:focus,
+  .part-item .part-head input:focus {
+    border-color: var(--accent);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  }
+
+  .part-item .part-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+  }
+
+  .stock-item .stock-fields,
+  .part-item .part-fields {
+    display: grid;
+    grid-template-columns: 1.1fr 1.1fr 0.6fr 1.2fr 1.4fr;
+    gap: 8px;
+    padding: 9px 10px;
+  }
+
+  .stock-item .field label,
+  .part-item .field label {
+    font-size: 9.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .stock-item .field input,
+  .stock-item .field select,
+  .part-item .field input,
+  .part-item .field select {
+    width: 100%;
+  }
+
+  /* ============ Inputs ============ */
+  input[type="text"],
+  input[type="number"],
+  select {
+    width: 100%;
+    padding: 6px 9px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--text);
+    transition: all var(--transition);
+  }
+
+  input[type="text"]:hover,
+  input[type="number"]:hover,
+  select:hover {
+    border-color: var(--border-strong);
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  }
+
+  input[type="checkbox"] {
+    width: auto;
+    accent-color: var(--accent);
+  }
+
+  select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 28px;
+  }
+
+  /* ============ Add buttons ============ */
+  .btn-add {
+    margin-top: 10px;
+    width: 100%;
+    border-style: dashed;
+    border-width: 1.5px;
+    border-color: var(--border-strong);
+    color: var(--accent);
+    font-weight: 600;
+    background: transparent;
+    padding: 9px 14px;
+    border-radius: var(--radius-sm);
+  }
+
+  .btn-add:hover {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent-dark);
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* ============ Settings ============ */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .settings-grid label {
+    font-size: 11px;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  /* ============ Hints ============ */
+  .hint-wrap { margin-top: 10px; }
+  .hint-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+  .hint-toggle:hover { color: var(--accent); }
+  .hint-toggle svg { width: 14px; height: 14px; }
+  .hint {
+    font-size: 11.5px;
+    color: var(--muted);
+    line-height: 1.6;
+    background: #f8fafc;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--border-strong);
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    padding: 0 12px;
+    margin-top: 0;
+    transition: max-height 0.3s ease, padding 0.3s ease, margin-top 0.3s ease, opacity 0.3s ease;
+  }
+  .hint-wrap.open .hint {
+    max-height: 600px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    opacity: 1;
+  }
+
+  /* ============ Results ============ */
+  #results { min-height: 200px; }
+
+  /* ============ Stats ============ */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent-gradient);
+    opacity: 0.7;
+  }
+
+  .stat:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .stat .val {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .stat .lbl {
+    font-size: 10.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  /* ============ Sheet cards ============ */
+  .sheet-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition);
+  }
+
+  .sheet-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .sheet-card .head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sheet-card .head .title {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .sheet-card .head .meta {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .sheet-card .head .util {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.02em;
+  }
+
+  .util.good {
+    background: var(--ok-light);
+    color: #047857;
+  }
+
+  .util.mid {
+    background: var(--warn-bg);
+    color: var(--warn-text);
+  }
+
+  .util.low {
+    background: var(--danger-light);
+    color: #b91c1c;
+  }
+
+  .diagram {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+  }
+
+  .diagram .part { cursor: default; }
+
+  /* ============ Legend ============ */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .legend span {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    padding: 3px 10px 3px 4px;
+    background: #f8fafc;
+    border-radius: 20px;
+  }
+
+  .legend i {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    display: inline-block;
+    border: 1px solid rgba(0,0,0,0.12);
+    flex-shrink: 0;
+  }
+
+  /* ============ Warn boxes ============ */
+  .warn-box {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-border);
+    border-left: 4px solid var(--warn-border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--warn-text);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .warn-box.error {
+    background: var(--danger-light);
+    border-color: #fca5a5;
+    border-left-color: var(--danger);
+    color: #991b1b;
+  }
+
+  /* ============ Empty state ============ */
+  .empty-msg {
+    color: var(--muted);
+    text-align: center;
+    padding: 60px 20px;
+    background: var(--panel);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ============ Tooltip ============ */
+  #tooltip {
+    position: fixed;
+    background: #0f172a;
+    color: #f1f5f9;
+    padding: 7px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    pointer-events: none;
+    display: none;
+    z-index: 500;
+    white-space: pre;
+    box-shadow: var(--shadow-lg);
+    max-width: 300px;
+  }
+
+  /* ============ Modal ============ */
+  .modal-back {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.15s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .modal-back.open {
+    display: flex;
+  }
+
+  .modal {
+    background: #fff;
+    border-radius: var(--radius-xl);
+    padding: 22px;
+    width: 400px;
+    max-width: 92vw;
+    max-height: 80vh;
+    overflow: auto;
+    box-shadow: var(--shadow-xl);
+    animation: modalIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.96) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal h3 {
+    margin: 0 0 16px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .modal .list-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition);
+  }
+
+  .modal .list-item:hover {
+    background: #f8fafc;
+  }
+
+  .modal .list-item .name {
+    flex: 1;
+    cursor: pointer;
+    color: var(--accent);
+    font-weight: 500;
+    font-size: 13.5px;
+  }
+
+  .modal .list-item .name:hover {
+    color: var(--accent-dark);
+    text-decoration: underline;
+  }
+
+  .modal .close-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ============ License modal ============ */
+  .license-text {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+  }
+
+  .license-text h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 16px 0 6px;
+  }
+
+  .license-text h4:first-child { margin-top: 0; }
+
+  .license-text ul {
+    margin: 4px 0 8px;
+    padding-left: 20px;
+  }
+
+  .license-text li { margin-bottom: 3px; }
+
+  .license-text .license-badge {
+    display: inline-block;
+    background: var(--accent-light);
+    color: var(--accent-dark);
+    font-weight: 700;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+  }
+
+  .license-text a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .license-text a:hover { text-decoration: underline; }
+
+  .license-text .license-footer {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ============ Calc button ============ */
+  #btn-calc {
+    width: 100%;
+    margin-bottom: 14px;
+    padding: 11px 16px;
+    font-size: 14.5px;
+    border-radius: var(--radius);
+    letter-spacing: 0.01em;
+  }
+
+  /* ============ Print ============ */
+  @media print {
+    header, #btn-calc, .panel, .btn-add, .no-print { display: none !important; }
+    main { grid-template-columns: 1fr; padding: 0; }
+    body { background: #fff; }
+    .sheet-card { break-inside: avoid; page-break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+    .stat { box-shadow: none; }
+  }
+
+  /* ============ Responsive tweaks ============ */
+  @media (max-width: 640px) {
+    header { padding: 0 14px; height: auto; min-height: 56px; padding-top: 8px; padding-bottom: 8px; }
+    header h1 { font-size: 15px; }
+    header .sub { display: none; }
+    .header-logo { width: 32px; height: 32px; }
+    .header-logo svg { width: 18px; height: 18px; }
+    main { padding: 12px; gap: 14px; }
+    .panel { padding: 14px 12px 10px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .stat .val { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-brand">
+    <div class="header-logo">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="8" y="4.5" width="8" height="5.5" rx="1.5" fill="#fff" fill-opacity="0.95"/>
+        <rect x="8" y="12" width="8" height="8" rx="1.5" fill="#fff" fill-opacity="0.7"/>
+      </svg>
+    </div>
+    <div>
+      <h1>IMBRIK <span class="version">v1.4.2</span></h1>
+      <div class="sub">Imbrication de pièces sur panneaux — 100 % local, aucune donnée envoyée</div>
+      <div class="sub">Développé pour la section Bois de Genech — B.Dupont — Licence AGPLv3</div>
+    </div>
+  </div>
+  <div class="actions">
+    <button id="btn-menu" class="burger" title="Menu" aria-label="Menu" aria-haspopup="menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="menu" id="app-menu">
+      <button id="btn-save">
+        <svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Sauver
+      </button>
+      <button id="btn-load">
+        <svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Charger
+      </button>
+      <button id="btn-export-bak">
+        <svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export sauvegarde
+      </button>
+      <button id="btn-import-bak">
+        <svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import sauvegarde
+      </button>
+      <button id="btn-csv">
+        <svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Export CSV
+      </button>
+      <button id="btn-img">
+        <svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Export image
+      </button>
+      <button id="btn-print">
+        <svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Imprimer / PDF
+      </button>
+      <button id="btn-reset">
+        <svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        Réinitialiser
+      </button>
+      <button id="btn-license">
+        <svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Licence AGPLv3
+      </button>
+      <a class="menu-link" href="https://kerneldesign.net/ressources/imbrik/Imbrik.zip" download>
+        <svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Télécharger IMBRIK
+      </a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="left-col">
+    <button id="btn-calc" class="primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Calculer
+    </button>
+    <div class="panel">
+      <h2>Panneaux disponibles (stock)</h2>
+      <div id="stock-table" class="stock-list"></div>
+      <button class="btn-add" id="btn-add-stock">+ Ajouter un panneau</button>
+      <div class="hint-wrap">
+        <button class="hint-toggle" type="button" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Aide</span>
+        </button>
+        <div class="hint">« Fil » indique le sens du fil du bois du panneau (longueur ou largeur). Les pièces avec fil imposé ne seront placées que dans le sens du fil du panneau ; avec « Indifférent », aucune contrainte de fil ne s'applique. Modifier le fil d'un panneau applique automatiquement ce fil à toute la colonne « Fil » des pièces à découper (quand tous les panneaux du stock ont le même fil). « Coupe » définit le sens de la première coupe : « Longueur d'abord » découpe le panneau en bandes traversant toute sa longueur (moins de manutention, chutes en bandes), « Largeur d'abord » en bandes traversant toute sa largeur, « Indifférent » laisse l'optimiseur tester les deux orientations. Si une pièce est trop grande pour tous les panneaux, elle sera signalée comme non placée.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Pièces à découper</h2>
+      <div id="parts-table" class="parts-list"></div>
+      <button class="btn-add" id="btn-add-part">+ Ajouter une pièce</button>
+      <div class="hint-wrap">
+        <button class="hint-toggle" type="button" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Aide</span>
+        </button>
+        <div class="hint">« Fil » : « Indifférent » signifie aucune contrainte de fil — l'optimiseur peut faire pivoter la pièce (échange longueur / largeur) dès qu'il y a la place pour mieux ranger le panneau. « Longueur » / « Largeur » impose le sens du fil : la pièce n'est posée que si son fil s'aligne sur celui du panneau, et l'orientation est alors forcée (ex. fil « Largeur » sur un panneau fil « Longueur » : la pièce est posée pivotée). « Panneau » réserve la pièce à un panneau précis du stock (« Tous » par défaut). Pré-remplissage automatique : si tous les panneaux du stock ont le même fil, une nouvelle pièce l'hérite ; s'il n'existe qu'un seul type de panneau, il lui est attribué d'office. Changer le fil d'un panneau met à jour la colonne entière.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Réglages</h2>
+      <div class="settings-grid">
+        <div>
+          <label for="set-unit">Unité</label>
+          <select id="set-unit">
+            <option value="mm">Millimètres (mm)</option>
+            <option value="cm">Centimètres (cm)</option>
+            <option value="m">Mètres (m)</option>
+            <option value="in">Pouces (")</option>
+            <option value="">Générique (u)</option>
+          </select>
+        </div>
+        <div>
+          <label for="set-kerf">Largeur de coupe (kerf)</label>
+          <input type="number" id="set-kerf" min="0" step="any" value="4">
+        </div>
+        <div>
+          <label for="set-dec">Décimales affichées</label>
+          <input type="number" id="set-dec" min="0" max="4" step="1" value="0">
+        </div>
+        <div>
+          <label for="set-order">Ordre des dimensions</label>
+          <select id="set-order">
+            <option value="LW">Longueur × Largeur</option>
+            <option value="WL">Largeur × Longueur</option>
+          </select>
+        </div>
+      </div>
+      <div class="hint-wrap">
+        <button class="hint-toggle" type="button" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Aide</span>
+        </button>
+        <div class="hint">La largeur de coupe (épaisseur de la lame / du laser) est déduite entre chaque coupe. 0 = coupe sans perte. Optimisation : les pièces identiques sont posées côte à côte dans des bandes homogènes, chacune détachée du reste du panneau par une seule coupe sur la largeur. Les chutes récupérables sont affichées en pointillés : chacune est un rectangle qui se détache du panneau en une seule coupe (bas du panneau, colonne de droite ou reste d'une bande).</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="results">
+    <div class="empty-msg">Ajoutez vos pièces et vos panneaux : le plan de coupe se recalcule automatiquement à chaque modification (le bouton « Calculer » reste disponible).</div>
+  </div>
+</main>
+
+<div id="tooltip"></div>
+
+<div class="modal-back" id="modal-back">
+  <div class="modal">
+    <h3 id="modal-title">Charger un projet</h3>
+    <div id="modal-body"></div>
+    <div class="close-row"><button id="modal-close">Fermer</button></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================ État ============================ */
+
+let state = {
+  parts: [
+    { label: "Côté",      w: "2000", h: "400",  qty: "4", grain: ""  },
+    { label: "Étagère",  w: "900",  h: "350",  qty: "8", grain: ""  },
+    { label: "Dos",      w: "1200", h: "600",  qty: "3", grain: ""  },
+    { label: "Traverse", w: "380",  h: "60",   qty: "16", grain: "" }
+  ],
+  stock: [
+    { label: "Panneau 18mm", w: "2440", h: "1220", qty: "5", grain: "L", cutDir: "W" }
+  ]
+};
+
+let lastResult = null;   // résultat du dernier calcul (pour exports)
+
+/* ============================ Utilitaires ============================ */
+
+const GRAIN_LABELS = { L: "Longueur", W: "Largeur" };
+
+function grainLabel(g) {
+  return GRAIN_LABELS[g] || "";
+}
+
+// Identifiants stables des panneaux du stock (pour la liaison pièce -> panneau)
+let uidSeq = 1;
+function newSid() { return "s" + (uidSeq++); }
+function ensureSids() {
+  state.stock.forEach(s => {
+    if (!s.sid) s.sid = newSid();
+    const m = /^s(\d+)$/.exec(s.sid);
+    if (m) uidSeq = Math.max(uidSeq, parseInt(m[1], 10) + 1); // évite les collisions avec les projets chargés
+  });
+}
+
+const $ = (sel) => document.querySelector(sel);
+
+function parseDim(v) {
+  if (typeof v === "number") return v;
+  const n = parseFloat(String(v).replace(",", "."));
+  return isNaN(n) ? NaN : n;
+}
+
+function fmtDim(v, dec) {
+  return Number(v).toFixed(dec).replace(".", ",");
+}
+
+function fmtPair(w, h) {
+  const dec = Math.max(0, parseInt($("#set-dec").value || "0", 10));
+  const a = fmtDim(w, dec), b = fmtDim(h, dec);
+  return $("#set-order").value === "WL" ? b + " × " + a : a + " × " + b;
+}
+
+function unitSuffix() {
+  const u = $("#set-unit").value;
+  return u === "in" ? '"' : (u ? " " + u : "");
+}
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+const PALETTE = [
+  "#4f83d1", "#5fbf7f", "#e8a13c", "#d16b6b", "#9d7bd1", "#4db6c9",
+  "#c98f4d", "#7fa650", "#c96da0", "#6a8caf", "#b5893c", "#8fd18f"
+];
+
+// Couleurs des pièces — palette Material Design extraite de couleurs.jpg
+// (poster 16 teintes : nuances 50→900 + accents A100→A700 ; le blanc et les
+// gris 50/100 sont exclus, invisibles sur le fond du plan de coupe).
+const PART_COLORS = [
+  "#efebe9", "#d7ccc8", "#bcaaa4", "#a1887f", "#8d6e63", "#795548",
+  "#6d4c41", "#5d4037", "#4e342e", "#3e2723", "#eeeeee", "#e0e0e0",
+  "#bdbdbd", "#9e9e9e", "#757575", "#616161", "#424242", "#212121",
+  "#fbe9e7", "#ffccbc", "#ffab91", "#ff8a65", "#ff7043", "#ff5722",
+  "#f4511e", "#e64a19", "#d84315", "#bf360c", "#fff3e0", "#ffe0b2",
+  "#ffcc80", "#ffb74d", "#ffa726", "#ff9800", "#fb8c00", "#f57c00",
+  "#ef6c00", "#e65100", "#ffd180", "#ffab40", "#ff9100", "#ff6d00",
+  "#e8f5e9", "#c8e6c9", "#a5d6a7", "#81c784", "#66bb6a", "#4caf50",
+  "#43a047", "#388e3c", "#2e7d32", "#1b5e20", "#b9f6ca", "#69f0ae",
+  "#00e676", "#00c853", "#f1f8e9", "#dcedc8", "#c5e1a5", "#aed581",
+  "#9ccc65", "#8bc34a", "#7cb342", "#689f38", "#558b2f", "#33691e",
+  "#ccff90", "#b2ff59", "#76ff03", "#64dd17", "#f9fbe7", "#f0f4c3",
+  "#e6ee9c", "#dce775", "#d4e157", "#cddc39", "#c0ca33", "#afb42b",
+  "#9e9d24", "#827717", "#f4ff81", "#eeff41", "#c6ff00", "#aeea00",
+  "#e1f5fe", "#b3e5fc", "#81d4fa", "#4fc3f7", "#29b6f6", "#03a9f4",
+  "#039be5", "#0288d1", "#0277bd", "#01579b", "#80d8ff", "#40c4ff",
+  "#00b0ff", "#0091ea", "#e0f7fa", "#b2ebf2", "#80deea", "#4dd0e1",
+  "#26c6da", "#00bcd4", "#00acc1", "#0097a7", "#00838f", "#006064",
+  "#84ffff", "#18ffff", "#00e5ff", "#00b8d4", "#e0f2f1", "#b2dfdb",
+  "#80cbc4", "#4db6ac", "#26a69a", "#009688", "#00897b", "#00796b",
+  "#00695c", "#004d40", "#a7ffeb", "#64ffda", "#1de9b6", "#00bfa5",
+  "#e3f2fd", "#bbdefb", "#90caf9", "#64b5f6", "#42a5f5", "#2196f3",
+  "#1e88e5", "#1976d2", "#1565c0", "#0d47a1", "#82b1ff", "#448aff",
+  "#2979ff", "#2962ff", "#e8eaf6", "#c5cae9", "#9fa8da", "#7986cb",
+  "#5c6bc0", "#3f51b5", "#3949ab", "#303f9f", "#283593", "#1a237e",
+  "#8c9eff", "#536dfe", "#3d5afe", "#304ffe", "#ede7f6", "#d1c4e9",
+  "#b39ddb", "#9575cd", "#7e57c2", "#673ab7", "#5e35b1", "#512da8",
+  "#4527a0", "#311b92", "#b388ff", "#7c4dff", "#651fff", "#6200ea",
+  "#ffebee", "#ffcdd2", "#ef9a9a", "#e57373", "#ef5350", "#f44336",
+  "#e53935", "#d32f2f", "#c62828", "#b71c1c", "#ff8a80", "#ff5252",
+  "#ff1744", "#d50000", "#fce4ec", "#f8bbd0", "#f48fb1", "#f06292",
+  "#ec407a", "#e91e63", "#d81b60", "#c2185b", "#ad1457", "#880e4f",
+  "#ff80ab", "#ff4081", "#f50057", "#c51162", "#f3e5f5", "#e1bee8",
+  "#ce93d8", "#ba68c8", "#ab47bc", "#9c27b0", "#8e24aa", "#7b1fa2",
+  "#6a1b9a", "#4a148c", "#ea80fc", "#e040fb", "#d500f9", "#aa00ff",
+  "#000000"
+];
+
+// Couleur attribuée à une pièce à sa création : une teinte tirée au
+// hasard dans la liste, de préférence distincte des couleurs déjà utilisées.
+function randomPartColor() {
+  const used = new Set(state.parts.map(p => p.color).filter(Boolean));
+  const dispo = PART_COLORS.filter(c => !used.has(c));
+  const pool = dispo.length ? dispo : PART_COLORS;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// Couleur du libellé tracé sur une pièce : celle (foncée ou blanche) qui offre
+// le meilleur contraste avec la couleur de la pièce (lisibilité SVG et export).
+function labelColorFor(bg) {
+  const m = /hsl\(\s*\d+,\s*\d+%,\s*(\d+)%\s*\)/.exec(bg || "");
+  if (m) return parseInt(m[1], 10) >= 65 ? "#1e2530" : "#ffffff";
+  const hex = /^#([0-9a-f]{6})$/i.exec((bg || "").trim());
+  if (hex) {
+    const n = parseInt(hex[1], 16);
+    const lin = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+    const l = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+    // Au-delà de cette luminance, le texte foncé contraste mieux que le blanc
+    return l > 0.217 ? "#1e2530" : "#ffffff";
+  }
+  return "#ffffff";
+}
+
+// Toute pièce sans couleur (ancien projet chargé, pièce par défaut) en reçoit
+// une, une seule fois : la couleur reste stable ensuite.
+function ensureColors() {
+  state.parts.forEach(p => { if (!p.color) p.color = randomPartColor(); });
+}
+
+// Accepte une pièce (objet avec .color) ou un libellé (string)
+function colorFor(partOrLabel) {
+  if (partOrLabel && typeof partOrLabel !== "string") {
+    if (partOrLabel.color) return partOrLabel.color;
+  }
+  const label = (typeof partOrLabel === "string" ? partOrLabel : (partOrLabel && partOrLabel.label) || "").trim();
+  const p = state.parts.find(p => (p.label || "").trim() === label);
+  if (p && p.color) return p.color;
+  // Repli : palette par ordre d'apparition (pièce sans couleur attribuée)
+  const labels = [...new Set(state.parts.map(p => (p.label || "").trim()))];
+  const i = Math.max(0, labels.indexOf(label));
+  return PALETTE[i % PALETTE.length];
+}
+
+/* ============================ Rendu des tableaux ============================ */
+
+function grainSelect(i, cur, allowNone) {
+  let o = "";
+  if (allowNone) o += '<option value=""' + (cur === "L" || cur === "W" ? "" : " selected") + '>Indifférent</option>';
+  o += '<option value="L"' + (cur === "L" ? " selected" : "") + '>Longueur</option>';
+  o += '<option value="W"' + (cur === "W" ? " selected" : "") + '>Largeur</option>';
+  return '<select data-i="' + i + '" data-f="grain">' + o + "</select>";
+}
+
+function stockPanelSelect(i, cur) {
+  let o = '<option value=""' + (cur ? "" : " selected") + '>Tous</option>';
+  state.stock.forEach((s, k) => {
+    const name = (s.label || "").trim() || "Panneau " + (k + 1);
+    o += '<option value="' + esc(s.sid) + '"' + (cur === s.sid ? " selected" : "") + '>' + esc(name) + "</option>";
+  });
+  return '<select data-i="' + i + '" data-f="stockRef">' + o + "</select>";
+}
+
+function cutDirSelect(i, cur) {
+  // undefined (ancien projet) → "W" par défaut ; "" → Indifférent ; "L"/"W" → respectif
+  const val = (cur === "L" || cur === "W" || cur === "") ? cur : "W";
+  let o = '<option value=""' + (val === "" ? " selected" : "") + '>Indifférent</option>';
+  o += '<option value="L"' + (val === "L" ? " selected" : "") + ">Longueur d'abord</option>";
+  o += '<option value="W"' + (val === "W" ? " selected" : "") + ">Largeur d'abord</option>";
+  return '<select data-i="' + i + '" data-f="cutDir">' + o + "</select>";
+}
+
+function renderParts() {
+  const container = $("#parts-table");
+  container.innerHTML = "";
+  ensureSids();
+  ensureColors();
+  state.parts.forEach((p, i) => {
+    const ref = state.stock.some(s => s.sid === p.stockRef) ? p.stockRef : "";
+    const item = document.createElement("div");
+    item.className = "part-item";
+    item.innerHTML =
+      '<div class="part-head">' +
+      '<span class="part-color" style="background:' + esc(p.color) + '" title="Couleur de la pièce dans le plan de coupe"></span>' +
+      '<input type="text" value="' + esc(p.label) + '" data-i="' + i + '" data-f="label" placeholder="Libellé de la pièce (ex. : Côté, Étagère…)">' +
+      '<button class="icon" data-del="' + i + '" title="Supprimer la pièce">×</button>' +
+      "</div>" +
+      '<div class="part-fields">' +
+      '<div class="field"><label>Long.</label>' +
+      '<input type="number" step="any" min="0" value="' + esc(p.w) + '" data-i="' + i + '" data-f="w" placeholder="0"></div>' +
+      '<div class="field"><label>Larg.</label>' +
+      '<input type="number" step="any" min="0" value="' + esc(p.h) + '" data-i="' + i + '" data-f="h" placeholder="0"></div>' +
+      '<div class="field"><label>Qté</label>' +
+      '<input type="number" step="1" min="1" value="' + esc(p.qty) + '" data-i="' + i + '" data-f="qty" placeholder="1"></div>' +
+      '<div class="field"><label title="Sens du fil du bois de la pièce : « Indifférent » laisse l\'optimiseur faire pivoter la pièce quand c\'est plus rangé">Fil</label>' +
+      grainSelect(i, p.grain, true) + "</div>" +
+      '<div class="field"><label title="Panneau du stock réservé à cette pièce (« Tous » par défaut)">Panneau</label>' +
+      stockPanelSelect(i, ref) + "</div>" +
+      "</div>";
+    container.appendChild(item);
+  });
+}
+
+function renderStock() {
+  const container = $("#stock-table");
+  container.innerHTML = "";
+  ensureSids();
+  state.stock.forEach((s, i) => {
+    const item = document.createElement("div");
+    item.className = "stock-item";
+    item.innerHTML =
+      '<div class="stock-head">' +
+      '<input type="text" value="' + esc(s.label) + '" data-i="' + i + '" data-f="label" placeholder="Libellé du panneau (ex. : Panneau 18 mm)">' +
+      '<button class="icon" data-del="' + i + '" title="Supprimer le panneau">×</button>' +
+      "</div>" +
+      '<div class="stock-fields">' +
+      '<div class="field"><label>Long.</label>' +
+      '<input type="number" step="any" min="0" value="' + esc(s.w) + '" data-i="' + i + '" data-f="w" placeholder="0"></div>' +
+      '<div class="field"><label>Larg.</label>' +
+      '<input type="number" step="any" min="0" value="' + esc(s.h) + '" data-i="' + i + '" data-f="h" placeholder="0"></div>' +
+      '<div class="field"><label>Qté</label>' +
+      '<input type="number" step="1" min="0" value="' + esc(s.qty) + '" data-i="' + i + '" data-f="qty" placeholder="0"></div>' +
+      '<div class="field"><label title="Sens du fil du bois du panneau">Fil</label>' +
+      grainSelect(i, s.grain, true) + "</div>" +
+      '<div class="field"><label title="Sens de la première coupe : « Longueur d\'abord » découpe le panneau en bandes dans le sens de la longueur (manutention minimale), « Largeur d\'abord » dans le sens de la largeur. « Indifférent » laisse l\'optimiseur choisir l\'orientation la plus efficace.">Coupe</label>' +
+      cutDirSelect(i, s.cutDir) + "</div>" +
+      "</div>";
+    container.appendChild(item);
+  });
+}
+
+function bindTable(tableId, arr, rerender) {
+  const table = $(tableId);
+  table.addEventListener("input", (e) => {
+    const t = e.target;
+    const i = t.getAttribute("data-i"), f = t.getAttribute("data-f");
+    if (i === null || f === null) return;
+    arr[i][f] = f === "rot" ? t.checked : t.value;
+  });
+  table.addEventListener("click", (e) => {
+    const del = e.target.getAttribute("data-del");
+    if (del !== null) { arr.splice(parseInt(del, 10), 1); rerender(); }
+  });
+}
+
+/* ---------- Pré-remplissage automatique des pièces selon le stock ---------- */
+
+// Remplit uniquement les champs laissés vides (« Indifférent » / « Tous »),
+// sans jamais écraser un choix explicite de l'utilisateur.
+function applyAutoDefaults() {
+  ensureSids();
+  // Fil : si tous les panneaux du stock partagent le même fil (longueur ou largeur),
+  // les pièces sans fil imposé l'héritent pour que le calcul se fasse dans le bon sens.
+  const grains = [...new Set(state.stock.map(s => (s.grain === "L" || s.grain === "W") ? s.grain : "").filter(Boolean))];
+  const commonGrain = grains.length === 1 ? grains[0] : "";
+  // Panneau : s'il n'existe qu'un seul type de panneau, les pièces « Tous » pointent dessus.
+  const singleSid = state.stock.length === 1 ? state.stock[0].sid : "";
+  state.parts.forEach(p => {
+    // pas de fil imposé aux pièces dont la rotation était cochée dans un ancien
+    // projet (le fil forcerait l'orientation), ni à celles dont le fil a été
+    // choisi manuellement ou dans un projet sauvegardé
+    if (commonGrain && !p.grain && !p.rot && !p.grainSet) p.grain = commonGrain;
+    if (singleSid && !p.stockRef) p.stockRef = singleSid;
+  });
+}
+
+/* ============================ Algorithme (bandes + kerf) ============================ */
+
+// Orientations possibles d'une pièce sur un panneau selon le fil imposé et la rotation
+function orientationsFor(p, sheetGrain) {
+  if (p.grain && sheetGrain) {
+    // Fil imposé : la pièce n'est placée que si son fil s'aligne sur celui du panneau.
+    // Non pivotée, l'axe longueur/largeur de la pièce suit celui du panneau ;
+    // pivotée, les axes sont inversés. Panneau « Indifférent » : aucun alignement à respecter.
+    return (p.grain === sheetGrain) ? [[p.w, p.h, false]] : [[p.h, p.w, true]];
+  }
+  if (p.rotatable) return [[p.w, p.h, false], [p.h, p.w, true]];
+  return [[p.w, p.h, false]];
+}
+
+// Découpe en bandes homogènes : les pièces identiques (mêmes dimensions, même fil,
+// même panneau réservé) sont posées côte à côte dans des bandes qui traversent le
+// panneau sur toute sa longueur — elles restent ainsi collées les unes aux autres.
+// Chaque bande est détachée du reste du panneau par une seule coupe sur la largeur.
+// Les pièces d'un type sont réparties équitablement entre ses bandes : des largeurs
+// de bandes voisines alignent les bords et concentrent l'espace libre en grandes
+// chutes rectangulaires (voir sheetChutes).
+//
+// Le paramètre cutDir contrôle le sens de la première coupe :
+//  - "L" : bandes dans le sens de la longueur (packing direct, comportement historique)
+//  - "W" : bandes dans le sens de la largeur (le panneau est pivoté de 90° avant
+//          le packing, puis les coordonnées sont retransposées dans le référentiel
+//          original — le fil du panneau est échangé en conséquence)
+//  - ""  : indifférent, les deux orientations sont essayées et la meilleure est
+//          retenue (plus de pièces placées ; à égalité, l'orientation directe).
+// Le résultat porte le drapeau « swapped » : true quand le packing retenu a été
+// fait dans le référentiel pivoté. Les chutes (sheetChutes) en ont besoin pour
+// être calculées dans le même référentiel que les pièces placées.
+function packSheet(sheetW, sheetH, pieces, kerf, sheetGrain, sheetSid, cutDir) {
+  // Packing dans un référentiel éventuellement pivoté, puis remise dans le
+  // référentiel original du panneau par transposition (x,y,w,h) -> (y,x,h,w).
+  const tryPack = (swap) => {
+    const w = swap ? sheetH : sheetW;
+    const h = swap ? sheetW : sheetH;
+    // Le fil du panneau est échangé quand on pivote le référentiel
+    const grain = swap
+      ? (sheetGrain === "L" ? "W" : sheetGrain === "W" ? "L" : sheetGrain)
+      : sheetGrain;
+    const r = packSheetInternal(w, h, pieces, kerf, grain, sheetSid);
+    if (swap) {
+      r.placed = r.placed.map(pl => ({
+        p: pl.p,
+        x: pl.y,
+        y: pl.x,
+        w: pl.h,
+        h: pl.w,
+        rotated: !pl.rotated
+      }));
+    }
+    r.swapped = swap;
+    return r;
+  };
+
+  if (cutDir === "W") return tryPack(true);
+  if (cutDir === "L") return tryPack(false);
+  // Indifférent : les deux orientations, on garde celle qui place le plus de pièces
+  const direct = tryPack(false);
+  const swapped = tryPack(true);
+  return swapped.placed.length > direct.placed.length ? swapped : direct;
+}
+
+function packSheetInternal(sheetW, sheetH, pieces, kerf, sheetGrain, sheetSid) {
+  const eligible = pieces.filter(p => !(p.stockSid && p.stockSid !== sheetSid)); // pièces réservées à un autre panneau
+  if (!eligible.length) return { placed: [], unused: [] };
+
+  // Regroupement des pièces par type
+  const groups = new Map();
+  for (const p of eligible) {
+    const key = p.w + "|" + p.h + "|" + p.grain + "|" + p.stockSid + "|" + (p.rotatable ? "R" : "F");
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(p);
+  }
+
+  // Découpe d'un type en bandes pour une orientation donnée :
+  //  - répartition équilibrée : largeurs de bandes voisines, qui alignent les bords
+  //    et concentrent l'espace libre en grandes chutes rectangulaires
+  //  - répartition pleine : chaque bande remplie au maximum avant la suivante
+  const bandsFor = (list, o, balanced) => {
+    const pw = o[0];
+    const perBand = Math.max(1, Math.floor((sheetW + kerf + 1e-9) / (pw + kerf)));
+    const nBands = Math.ceil(list.length / perBand);
+    const bands = [];
+    let i = 0;
+    for (let b = 0; b < nBands; b++) {
+      const take = balanced
+        ? Math.min(list.length - i, Math.max(1, Math.ceil((list.length - i) / (nBands - b))))
+        : Math.min(perBand, list.length - i);
+      bands.push({ h: o[1], w: take * pw + (take - 1) * kerf, pieces: list.slice(i, i + take), o });
+      i += take;
+    }
+    return bands;
+  };
+
+  // Construction complète des bandes selon une stratégie d'orientation :
+  //  - "totalH" : répartition des pièces entre les deux orientations (quand la
+  //               rotation est autorisée) consommant le moins de hauteur de
+  //               panneau — la rotation est réellement utilisée dès qu'elle
+  //               améliore le rangement
+  //  - "ph"     : bandes les plus basses possible (s'insèrent plus facilement en fin de panneau)
+  // À égalité, l'orientation non pivotée est privilégiée.
+  const buildBands = (strategy, balanced) => {
+    const bands = [];
+    for (const list of groups.values()) {
+      const orients = orientationsFor(list[0], sheetGrain)
+        .filter(o => o[0] <= sheetW + 1e-9 && o[1] <= sheetH + 1e-9);
+      if (!orients.length) continue; // ce type ne tient pas sur ce panneau
+      const per = orients.map(o => Math.max(1, Math.floor((sheetW + kerf + 1e-9) / (o[0] + kerf))));
+      const n = list.length;
+      // répartition des n pièces : k dans la première orientation, n-k dans la seconde
+      let best = null;
+      for (let k = (orients.length > 1 ? 0 : n); k <= n; k++) {
+        const cnt = [k, n - k];
+        const h = orients.map((o, j) => cnt[j] ? Math.ceil(cnt[j] / per[j]) * o[1] : 0);
+        const score = strategy === "totalH"
+          ? h[0] + h[1]
+          : Math.max(...orients.filter((o, j) => cnt[j] > 0).map(o => o[1])); // bande la plus haute
+        const rotated = orients.length > 1 ? n - k : 0;
+        const total = h[0] + h[1];
+        if (!best || score < best.score - 1e-9 ||
+            (Math.abs(score - best.score) < 1e-9 && (rotated < best.rotated ||
+             (rotated === best.rotated && total < best.total - 1e-9))))
+          best = { k, score, rotated, total };
+      }
+      if (best.k > 0) bands.push(...bandsFor(list.slice(0, best.k), orients[0], balanced));
+      if (orients.length > 1 && n - best.k > 0)
+        bands.push(...bandsFor(list.slice(best.k), orients[1], balanced));
+    }
+    return bands;
+  };
+
+  // Empilage des bandes : les plus hautes d'abord ; à hauteur égale, les plus
+  // remplies d'abord pour placer un maximum de pièces. Les bandes qui ne tiennent
+  // pas restent disponibles pour un autre panneau.
+  const pack = (bands) => {
+    bands.sort((a, b) => b.h - a.h || b.w - a.w);
+    const placed = [];
+    let y = 0;
+    for (const b of bands) {
+      if (y + b.h > sheetH + 1e-9) continue;
+      let x = 0;
+      for (const p of b.pieces) {
+        placed.push({ p, x, y, w: b.o[0], h: b.o[1], rotated: b.o[2] });
+        x += b.o[0] + kerf;
+      }
+      y += b.h + kerf;
+    }
+    return { placed, usedH: y };
+  };
+
+  // Les quatre variantes sont essayées (orientation × répartition) ; on garde celle
+  // qui place le plus de pièces, puis celle qui laisse la plus grande chute. À
+  // égalité, la répartition équilibrée est privilégiée : des chutes plus rectangulaires.
+  let best = null;
+  for (const [strategy, balanced] of [["totalH", true], ["ph", true], ["totalH", false], ["ph", false]]) {
+    const r = pack(buildBands(strategy, balanced));
+    if (!best || r.placed.length > best.placed.length ||
+        (r.placed.length === best.placed.length && r.usedH < best.usedH - 1e-9))
+      best = r;
+  }
+
+  const placedSet = new Set(best.placed.map(pl => pl.p));
+  return { placed: best.placed, unused: eligible.filter(p => !placedSet.has(p)) };
+}
+
+// Chutes récupérables d'un panneau : chaque chute est un rectangle qui se détache
+// du panneau en une seule coupe — le bas du panneau (coupe horizontale), la colonne
+// de droite (coupe verticale sur toute la hauteur des bandes), ou le reste d'une
+// bande entre la fin des pièces et cette coupe verticale.
+// Le paramètre swap=true s'utilise quand le packing retenu a été fait dans le
+// référentiel pivoté (cutDir === "W", ou « Indifférent » avec l'orientation pivotée
+// retenue — voir le drapeau « swapped » de packSheet) : on transpose alors panneau
+// et pièces pour retomber sur des bandes horizontales, puis on retransforme les
+// chutes. Une chute ne doit jamais se superposer à une pièce placée : toute chute
+// qui chevaucherait une pièce (garde-fou) est écartée.
+function sheetChutes(sheetW, sheetH, used, kerf, swap) {
+  const W = swap ? sheetH : sheetW;
+  const H = swap ? sheetW : sheetH;
+  const usedT = swap
+    ? used.map(pl => ({ p: pl.p, x: pl.y, y: pl.x, w: pl.h, h: pl.w, rotated: pl.rotated }))
+    : used;
+
+  const bandMap = new Map();
+  for (const pl of usedT) {
+    const key = Math.round(pl.y * 1e6);
+    let b = bandMap.get(key);
+    if (!b) { b = { y: pl.y, h: pl.h, usedW: pl.x + pl.w }; bandMap.set(key, b); }
+    else if (pl.x + pl.w > b.usedW) b.usedW = pl.x + pl.w;
+  }
+  const bands = [...bandMap.values()];
+  if (!bands.length) return [];
+  const yEnd = Math.max(...bands.map(b => b.y + b.h));
+  const wMax = Math.max(...bands.map(b => b.usedW));
+  const chutes = [];
+  const rightW = W - wMax - kerf;
+  if (rightW > 1e-9) chutes.push({ x: wMax + kerf, y: 0, w: rightW, h: yEnd });
+  const bottomH = H - yEnd - kerf;
+  if (bottomH > 1e-9) chutes.push({ x: 0, y: yEnd + kerf, w: W, h: bottomH });
+  for (const b of bands) {
+    const gw = wMax - b.usedW - kerf;
+    if (gw > 1e-9) chutes.push({ x: b.usedW + kerf, y: b.y, w: gw, h: b.h });
+  }
+  let out = chutes;
+  if (swap) out = out.map(ch => ({ x: ch.y, y: ch.x, w: ch.h, h: ch.w }));
+  // Garde-fou : dans tous les cas, une chute ne se superpose pas à une pièce
+  return out.filter(ch => !used.some(pl =>
+    ch.x < pl.x + pl.w - 1e-9 && pl.x < ch.x + ch.w - 1e-9 &&
+    ch.y < pl.y + pl.h - 1e-9 && pl.y < ch.y + ch.h - 1e-9));
+}
+
+function optimize(stockList, partsList, kerf) {
+  const pieces = [];
+  partsList.forEach((pt, idx) => {
+    for (let q = 0; q < pt.qty; q++) {
+      pieces.push({ label: pt.label, w: pt.w, h: pt.h, rotatable: pt.rotatable, grain: pt.grain || "", stockSid: pt.stockSid || "", color: pt.color || "", ref: idx });
+    }
+  });
+  // Tri : surface décroissante, puis plus grande dimension décroissante
+  pieces.sort((a, b) => (b.w * b.h - a.w * a.h) || (Math.max(b.w, b.h) - Math.max(a.w, a.h)));
+
+  const sheets = [];
+  for (const s of stockList) {
+    for (let q = 0; q < s.qty; q++) {
+      sheets.push({ w: s.w, h: s.h, label: s.label, grain: s.grain, cutDir: s.cutDir || "", sid: s.sid, used: [], swapped: false });
+    }
+  }
+  // Les grands panneaux d'abord pour accueillir les grandes pièces
+  sheets.sort((a, b) => b.w * b.h - a.w * a.h);
+
+  const remaining = [...pieces];
+  for (const sheet of sheets) {
+    if (!remaining.length) break;
+    const res = packSheet(sheet.w, sheet.h, remaining, kerf, sheet.grain, sheet.sid, sheet.cutDir);
+    sheet.used = res.placed;
+    // Orientation réellement retenue (utile pour les chutes quand cutDir est « Indifférent »)
+    sheet.swapped = !!res.swapped;
+    const placedSet = new Set(res.placed.map(pl => pl.p));
+    for (let i = remaining.length - 1; i >= 0; i--) {
+      if (placedSet.has(remaining[i])) remaining.splice(i, 1);
+    }
+  }
+  return { sheets: sheets.filter(s => s.used.length), remaining };
+}
+
+/* ============================ Calcul ============================ */
+
+function readInputs() {
+  const errors = [];
+  ensureSids();
+  const parts = [];
+  state.parts.forEach((p, i) => {
+    const w = parseDim(p.w), h = parseDim(p.h), qty = parseInt(p.qty, 10);
+    if (!(w > 0) || !(h > 0) || !(qty > 0)) {
+      errors.push("Pièce " + (i + 1) + " (" + (p.label || "sans libellé") + ") : dimensions ou quantité invalides.");
+      return;
+    }
+    const stockSid = p.stockRef && state.stock.some(s => s.sid === p.stockRef) ? p.stockRef : "";
+    const grain = p.grain === "L" || p.grain === "W" ? p.grain : "";
+    // fil « Indifférent » : la pièce peut être pivotée par l'optimiseur s'il y a la place
+    parts.push({ label: (p.label || "P" + (i + 1)).trim(), w, h, qty, rotatable: grain === "", grain, stockSid, color: p.color || "" });
+  });
+  const stock = [];
+  state.stock.forEach((s, i) => {
+    const w = parseDim(s.w), h = parseDim(s.h), qty = parseInt(s.qty, 10);
+    if (!(w > 0) || !(h > 0) || !(qty > 0)) {
+      errors.push("Panneau " + (i + 1) + " (" + (s.label || "sans libellé") + ") : dimensions ou quantité invalides.");
+      return;
+    }
+    stock.push({ label: (s.label || "Panneau " + w + "×" + h).trim(), w, h, qty, grain: (s.grain === "L" || s.grain === "W" || s.grain === "") ? s.grain : "L", cutDir: (s.cutDir === "L" || s.cutDir === "W" || s.cutDir === "") ? s.cutDir : "W", sid: s.sid });
+  });
+  const kerf = parseDim($("#set-kerf").value);
+  if (!(kerf >= 0)) errors.push("Largeur de coupe invalide.");
+  return { parts, stock, kerf: kerf > 0 ? kerf : 0, errors };
+}
+
+function calculate() {
+  const { parts, stock, kerf, errors } = readInputs();
+  const container = $("#results");
+  if (errors.length) {
+    container.innerHTML = '<div class="warn-box error"><b>Erreurs :</b><br>' +
+      errors.map(esc).join("<br>") + "</div>";
+    lastResult = null;
+    return;
+  }
+  if (!parts.length || !stock.length) {
+    container.innerHTML = '<div class="warn-box error">Ajoutez au moins une pièce et un panneau.</div>';
+    lastResult = null;
+    return;
+  }
+
+  const res = optimize(stock, parts, kerf);
+
+  // Grouper les panneaux au layout identique
+  const groups = [];
+  for (const s of res.sheets) {
+    const sig = s.used.map(pl => [pl.p.label, +pl.x.toFixed(6), +pl.y.toFixed(6), +pl.w.toFixed(6), +pl.h.toFixed(6), pl.rotated].join("|")).sort().join(";");
+    let g = groups.find(g => g.sig === sig && g.w === s.w && g.h === s.h && g.label === s.label && g.grain === s.grain && g.cutDir === s.cutDir);
+    if (!g) { g = { sig, w: s.w, h: s.h, label: s.label, grain: s.grain, cutDir: s.cutDir, swapped: s.swapped, count: 0, used: s.used }; groups.push(g); }
+    g.count++;
+  }
+
+  const totalSheetArea = res.sheets.reduce((t, s) => t + s.w * s.h, 0);
+  const totalUsedArea = res.sheets.reduce((t, s) => t + s.used.reduce((x, pl) => x + pl.w * pl.h, 0), 0);
+  const totalParts = parts.reduce((t, p) => t + p.qty, 0);
+  const placedCount = totalParts - res.remaining.length;
+
+  lastResult = { groups, sheets: res.sheets, remaining: res.remaining, stock, kerf };
+
+  let html = "";
+
+  // Avertissements
+  if (res.remaining.length) {
+    const byLabel = {};
+    res.remaining.forEach(p => { byLabel[p.label] = (byLabel[p.label] || 0) + 1; });
+    const list = Object.keys(byLabel).map(k => esc(k) + " × " + byLabel[k]).join(", ");
+    html += '<div class="warn-box"><b>' + res.remaining.length + ' pièce(s) non placée(s)</b> — stock insuffisant : ' +
+      list + ". Ajoutez des panneaux ou réduisez les quantités.</div>";
+  }
+
+  // Statistiques
+  const util = totalSheetArea ? (100 * totalUsedArea / totalSheetArea) : 0;
+  html += '<div class="stats">' +
+    '<div class="stat"><div class="val">' + res.sheets.length + '</div><div class="lbl">Panneaux utilisés</div></div>' +
+    '<div class="stat"><div class="val">' + placedCount + " / " + totalParts + '</div><div class="lbl">Pièces placées</div></div>' +
+    '<div class="stat"><div class="val">' + util.toFixed(1).replace(".", ",") + ' %</div><div class="lbl">Taux d\'utilisation</div></div>' +
+    "</div>";
+
+  // Panneaux
+  groups.forEach((g, gi) => {
+    const usedArea = g.used.reduce((x, pl) => x + pl.w * pl.h, 0);
+    const u = 100 * usedArea / (g.w * g.h);
+    const cls = u >= 80 ? "good" : u >= 55 ? "mid" : "low";
+    html += '<div class="sheet-card">' +
+      '<div class="head">' +
+      '<span class="title">Panneau ' + (gi + 1) + (g.count > 1 ? ' <span style="color:var(--accent)">(× ' + g.count + ' identiques)</span>' : "") + "</span>" +
+      '<span class="meta">' + esc(g.label) + " — " + fmtPair(g.w, g.h) + unitSuffix() +
+      " — Fil : " + (g.grain === "W" ? "largeur" : g.grain === "L" ? "longueur" : "indifférent") +
+      " — Coupe : " + (g.cutDir === "L" ? "longueur d'abord" : g.cutDir === "W" ? "largeur d'abord" : "indifférent") + "</span>" +
+      '<span class="util ' + cls + '">' + u.toFixed(1).replace(".", ",") + " %</span>" +
+      "</div>" +
+      svgDiagram(g) +
+      legendFor(g) +
+      "</div>";
+  });
+
+  container.innerHTML = html;
+  bindDiagramTooltips();
+}
+
+/* ============================ Diagramme SVG ============================ */
+
+/* ---------- Fil du bois : traits imitant le sens du fil ---------- */
+
+// Sens du fil d'une pièce posée : true = lignes horizontales (selon la largeur du panneau),
+// null = aucun trait affiché (panneau « Indifférent »)
+function grainHorizontal(pl, sheetGrain) {
+  if (pl.p.grain) {
+    // Fil imposé sur la pièce : suit son propre fil (aligné sur celui du panneau par le calcul)
+    const alongLength = pl.p.grain === "L";
+    return alongLength ? !pl.rotated : !!pl.rotated;
+  }
+  // Pièce « Indifférent » : par défaut, le fil du panneau s'affiche
+  return sheetGrain ? sheetGrain === "L" : null;
+}
+
+// Pseudo-aléa déterministe : même rendu à l'écran, à l'export et d'un calcul à l'autre
+function grainHash(a, b, c) {
+  const s = Math.sin(a * 127.1 + b * 311.7 + c * 74.7) * 43758.5453;
+  return s - Math.floor(s);
+}
+
+// Traits ondulés « fil du bois » ; extrémités affinées pour rester dans la pièce,
+// chaque trait est découpé en sous-traits avec des ruptures pseudo-aléatoires
+function grainLinePoints(x, y, w, h, horizontal, seed) {
+  const along = horizontal ? w : h;
+  const across = horizontal ? h : w;
+  if (along < 14 || across < 8) return null; // pièces vraiment trop petites
+  const n = Math.min(7, Math.max(1, Math.floor(across / 16))); // au moins un trait
+  const gap = across / (n + 1);
+  const amp = Math.min(2.2, gap * 0.18);
+  const lines = [];
+  for (let k = 1; k <= n; k++) {
+    const c = gap * k;
+    const phase = ((seed * 131 + k * 57) % 100) / 100 * Math.PI * 2;
+    const wl = Math.max(24, along * (0.35 + ((seed * 17 + k * 29) % 40) / 100));
+    const steps = Math.max(6, Math.round(along / 9));
+    const sub = [];
+    let cur = [], holeChain = 0;
+    for (let j = 0; j <= steps; j++) {
+      const t = j / steps;
+      const off = amp * Math.sin(2 * Math.PI * t * along / wl + phase) * Math.sin(Math.PI * t);
+      const pt = {
+        px: horizontal ? x + t * along : x + c + off,
+        py: horizontal ? y + c + off : y + t * along
+      };
+      // rupture du trait (jamais aux extrémités, jamais deux fois de suite après un point isolé)
+      const hole = j > 0 && j < steps && cur.length >= 2 && holeChain < 2 && grainHash(seed, k, j) < 0.15;
+      if (hole) {
+        sub.push(cur);
+        cur = [];
+        holeChain++;
+      } else {
+        cur.push(pt);
+        holeChain = 0;
+      }
+    }
+    if (cur.length > 1) sub.push(cur);
+    if (sub.length) lines.push(sub);
+  }
+  return lines;
+}
+
+function grainLinesSVG(x, y, w, h, horizontal, seed) {
+  const lines = grainLinePoints(x, y, w, h, horizontal, seed);
+  if (!lines) return "";
+  let out = "";
+  for (const sub of lines) {
+    for (const pts of sub) {
+      out += '<polyline points="' + pts.map(p => p.px.toFixed(1) + "," + p.py.toFixed(1)).join(" ") +
+        '" fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="0.8" style="pointer-events:none"/>';
+    }
+  }
+  return out;
+}
+
+function drawGrainLines(ctx, x, y, w, h, horizontal, seed) {
+  const lines = grainLinePoints(x, y, w, h, horizontal, seed);
+  if (!lines) return;
+  ctx.strokeStyle = "rgba(0,0,0,0.08)";
+  ctx.lineWidth = 0.8;
+  for (const sub of lines) {
+    for (const pts of sub) {
+      ctx.beginPath();
+      pts.forEach((p, j) => { if (j === 0) ctx.moveTo(p.px, p.py); else ctx.lineTo(p.px, p.py); });
+      ctx.stroke();
+    }
+  }
+}
+
+/* ---------- Étiquettes des pièces ---------- */
+
+// Choix de l'étiquette d'une pièce selon la place disponible (dimensions à l'écran) :
+// nom + dimensions si possible, nom seul sur les petites pièces, police réduite au
+// besoin (minimum 6 px, nom tronqué si vraiment trop long), et texte vertical sur
+// les pièces trop étroites pour un texte horizontal lisible. Renvoie null si rien
+// ne tient.
+function partLabelLayout(w, h, label, dims, maxFs) {
+  label = (label || "").trim();
+  if (!label || w < 10 || h < 10) return null;
+  maxFs = maxFs || 15;
+  const fit = (along, across, lines) =>
+    Math.min(maxFs, along / (Math.max(...lines.map(l => l.length)) * 0.62), across / (lines.length * 1.25));
+  let lines = [label, dims];
+  let fsH = fit(w, h, lines), fsV = fit(h, w, lines);
+  if (Math.max(fsH, fsV) < 7) { // trop étroit pour le nom et les dimensions : nom seul
+    lines = [label];
+    fsH = fit(w, h, lines); fsV = fit(h, w, lines);
+  }
+  const vertical = fsV > fsH + 1e-9; // vertical seulement si la pièce est trop étroite
+  const along = vertical ? h : w, across = vertical ? w : h;
+  let fs = Math.max(fsH, fsV);
+  // très petit format : typographie réduite d'office
+  if (w < 25 && h < 25) fs *= 0.8;
+  if (fs < 4) {
+    fs = 4; // police minimale, nom tronqué s'il dépasse
+    const maxChars = Math.max(1, Math.floor(along / (fs * 0.62)));
+    if (maxChars < label.length) lines = [label.slice(0, Math.max(1, maxChars - 1)).trimEnd() + "…"];
+  }
+  return { vertical, lines, fs };
+}
+
+// Tracé d'une étiquette en SVG : centrée sur (cx, cy), verticale si besoin
+function labelSVG(cx, cy, lbl, fill, weight) {
+  const lh = lbl.fs * 1.15;
+  let s = "";
+  lbl.lines.forEach((ln, i) => {
+    const ty = cy + (i - (lbl.lines.length - 1) / 2) * lh;
+    s += '<text x="' + cx.toFixed(1) + '" y="' + (ty + lbl.fs * 0.35).toFixed(1) + '" font-size="' + lbl.fs.toFixed(1) +
+      '" text-anchor="middle" fill="' + fill + '"' + (weight ? ' font-weight="' + weight + '"' : "") +
+      ' style="pointer-events:none"' +
+      (lbl.vertical ? ' transform="rotate(-90 ' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ')"' : "") +
+      ">" + esc(ln) + "</text>";
+  });
+  return s;
+}
+
+// Tracé d'une étiquette sur le canvas d'export : centrée, verticale si besoin
+function labelCanvas(ctx, cx, cy, lbl, fill, firstBold) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  if (lbl.vertical) ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = fill;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const lh = lbl.fs * 1.15;
+  lbl.lines.forEach((ln, i) => {
+    ctx.font = (firstBold && i === 0 ? "600 " : "400 ") + lbl.fs.toFixed(1) + "px sans-serif";
+    ctx.fillText(ln, 0, (i - (lbl.lines.length - 1) / 2) * lh);
+  });
+  ctx.restore();
+}
+
+function svgDiagram(g) {
+  const maxW = 980;
+  const basePad = 34;
+  const scale = Math.min(1, maxW / (g.w + 2 * basePad));
+  const pad = Math.max(basePad * scale, 26); // marge viewBox minimale pour les cotes
+  const W = g.w * scale + 2 * pad;
+  const H = g.h * scale + 2 * pad;
+  const dec = Math.max(0, parseInt($("#set-dec").value || "0", 10));
+
+  let s = '<svg class="diagram" viewBox="0 0 ' + W + " " + H + '" xmlns="http://www.w3.org/2000/svg">';
+  s += '<rect x="' + pad + '" y="' + pad + '" width="' + g.w * scale + '" height="' + g.h * scale + '" fill="#f6f8fb" stroke="#8a97ab" stroke-width="2"/>';
+
+  g.used.forEach((pl, gi) => {
+    const x = pad + pl.x * scale, y = pad + pl.y * scale;
+    const w = pl.w * scale, h = pl.h * scale;
+    const color = colorFor(pl.p);
+    const tipParts = [pl.p.label, fmtPair(pl.w, pl.h) + unitSuffix()];
+    if (pl.rotated) tipParts.push("pivotée");
+    if (pl.p.grain) tipParts.push("fil : " + (pl.p.grain === "L" ? "longueur" : "largeur"));
+    s += '<rect class="part" x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" width="' + w.toFixed(2) + '" height="' + h.toFixed(2) + '" fill="' + color + '" fill-opacity="0.85" stroke="' + color + '" stroke-width="1.2" data-tip="' + esc(tipParts.join("|")) + '"/>';
+    const gh = grainHorizontal(pl, g.grain);
+    if (gh !== null) s += grainLinesSVG(x, y, w, h, gh, gi);
+    // Étiquette : affichée même sur les petits formats, police réduite au besoin,
+    // verticale sur les pièces étroites
+    const lbl = partLabelLayout(w, h, pl.p.label, fmtPair(pl.w, pl.h));
+    if (lbl) s += labelSVG(x + w / 2, y + h / 2, lbl, labelColorFor(color), "600");
+  });
+
+  // Chutes récupérables : rectangles en pointillés, détachables en une seule coupe
+  sheetChutes(g.w, g.h, g.used, lastResult ? lastResult.kerf : 0, !!g.swapped).forEach(ch => {
+    if (ch.w < g.w * 0.02 || ch.h < g.h * 0.02) return; // trop petites pour être utiles
+    const cx = pad + ch.x * scale, cy = pad + ch.y * scale;
+    const cw = ch.w * scale, chh = ch.h * scale;
+    s += '<rect class="chute" x="' + cx.toFixed(2) + '" y="' + cy.toFixed(2) + '" width="' + cw.toFixed(2) + '" height="' + chh.toFixed(2) +
+      '" fill="none" stroke="#98a4b8" stroke-width="1.2" stroke-dasharray="6 4" data-tip="' + esc("Chute|" + fmtPair(ch.w, ch.h) + unitSuffix()) + '"/>';
+    const lbc = partLabelLayout(cw, chh, "chute", fmtPair(ch.w, ch.h), 10);
+    if (lbc) s += labelSVG(cx + cw / 2, cy + chh / 2, lbc, "#a8b3c3", null);
+  });
+
+  // Cotes (dimensions du panneau)
+  const fs2 = 12;
+  s += '<text x="' + (pad + g.w * scale / 2) + '" y="' + (pad - 8) + '" font-size="' + fs2 + '" text-anchor="middle" fill="#5b6b81">' + fmtDim(g.w, dec) + unitSuffix() + "</text>";
+  s += '<text x="' + (pad - 8) + '" y="' + (pad + g.h * scale / 2) + '" font-size="' + fs2 + '" text-anchor="middle" fill="#5b6b81" transform="rotate(-90 ' + (pad - 8) + " " + (pad + g.h * scale / 2) + ')">' + fmtDim(g.h, dec) + unitSuffix() + "</text>";
+  s += "</svg>";
+  return s;
+}
+
+function legendFor(g) {
+  const labels = [...new Set(g.used.map(pl => pl.p.label))];
+  return '<div class="legend no-print">' + labels.map(l =>
+    '<span><i style="background:' + colorFor(l) + '"></i>' + esc(l) + "</span>").join("") + "</div>";
+}
+
+function bindDiagramTooltips() {
+  const tip = $("#tooltip");
+  document.querySelectorAll("#results .part, #results .chute").forEach(rect => {
+    rect.addEventListener("mousemove", (e) => {
+      tip.style.display = "block";
+      tip.style.left = (e.clientX + 14) + "px";
+      tip.style.top = (e.clientY + 14) + "px";
+      tip.textContent = rect.getAttribute("data-tip").split("|").join(" — ");
+    });
+    rect.addEventListener("mouseleave", () => { tip.style.display = "none"; });
+  });
+}
+
+/* ============================ Exports ============================ */
+
+function download(filename, blob) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+function exportCSV() {
+  if (!lastResult) { alert("Lancez d'abord un calcul."); return; }
+  const dec = Math.max(0, parseInt($("#set-dec").value || "0", 10));
+  const sep = ";";
+  let rows = [["Panneau", "Libellé", "Position X", "Position Y", "Longueur", "Largeur", "Pivotée", "Fil pièce"].join(sep)];
+  lastResult.sheets.forEach((s, i) => {
+    s.used.forEach(pl => {
+      rows.push([
+        "P" + (i + 1), pl.p.label,
+        fmtDim(pl.x, dec), fmtDim(pl.y, dec),
+        fmtDim(pl.w, dec), fmtDim(pl.h, dec),
+        pl.rotated ? "oui" : "non",
+        pl.p.grain ? grainLabel(pl.p.grain) : ""
+      ].join(sep));
+    });
+  });
+  download("decoupe.csv", new Blob(["\uFEFF" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" }));
+}
+
+function sanitizeFilename(s) {
+  return (s || "").trim().replace(/[\\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").slice(0, 60) || "panneau";
+}
+
+function exportImage() {
+  if (!lastResult) { alert("Lancez d'abord un calcul."); return; }
+  const groups = lastResult.groups;
+  const pad = 40;    // marge autour du panneau
+  const titleH = 26; // bande de titre
+  groups.forEach((g, gi) => {
+    const scale = Math.min(1, 4000 / Math.max(g.w, g.h)); // 1 unité = 1 px, plafonné
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(g.w * scale) + 2 * pad;
+    canvas.height = Math.ceil(g.h * scale) + 2 * pad + titleH;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const title = g.label + " — " + fmtPair(g.w, g.h) + unitSuffix() + (g.count > 1 ? " (×" + g.count + ")" : "");
+    ctx.fillStyle = "#1e2530";
+    ctx.font = "600 14px sans-serif";
+    ctx.fillText(title, pad, pad + 14);
+
+    const py = pad + titleH;
+    ctx.fillStyle = "#f6f8fb";
+    ctx.strokeStyle = "#8a97ab";
+    ctx.fillRect(pad, py, g.w * scale, g.h * scale);
+    ctx.strokeRect(pad, py, g.w * scale, g.h * scale);
+    g.used.forEach((pl, gi) => {
+      const col = colorFor(pl.p);
+      ctx.fillStyle = col;
+      ctx.globalAlpha = 0.85;
+      ctx.fillRect(pad + pl.x * scale, py + pl.y * scale, pl.w * scale, pl.h * scale);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = col;
+      ctx.strokeRect(pad + pl.x * scale, py + pl.y * scale, pl.w * scale, pl.h * scale);
+      const gh = grainHorizontal(pl, g.grain);
+      if (gh !== null) drawGrainLines(ctx, pad + pl.x * scale, py + pl.y * scale, pl.w * scale, pl.h * scale, gh, gi);
+      // Étiquette : affichée même sur les petits formats, police réduite au besoin,
+      // verticale sur les pièces étroites
+      const lbl = partLabelLayout(pl.w * scale, pl.h * scale, pl.p.label, fmtPair(pl.w, pl.h));
+      if (lbl) labelCanvas(ctx, pad + (pl.x + pl.w / 2) * scale, py + (pl.y + pl.h / 2) * scale, lbl, labelColorFor(col), true);
+    });
+
+    // Chutes récupérables : rectangles en pointillés
+    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = "#98a4b8";
+    sheetChutes(g.w, g.h, g.used, lastResult.kerf, !!g.swapped).forEach(ch => {
+      if (ch.w < g.w * 0.02 || ch.h < g.h * 0.02) return;
+      const cx = pad + ch.x * scale, cyp = py + ch.y * scale;
+      ctx.strokeRect(cx, cyp, ch.w * scale, ch.h * scale);
+      const lbc = partLabelLayout(ch.w * scale, ch.h * scale, "chute", fmtPair(ch.w, ch.h), 10);
+      if (lbc) labelCanvas(ctx, cx + ch.w * scale / 2, cyp + ch.h * scale / 2, lbc, "#a8b3c3", false);
+    });
+    ctx.setLineDash([]);
+
+    const name = sanitizeFilename(g.label) + " - " + String(gi + 1).padStart(2, "0") + ".png";
+    canvas.toBlob((blob) => {
+      if (blob) setTimeout(() => download(name, blob), gi * 600);
+    }, "image/png");
+  });
+}
+
+/* ============================ Sauvegarde / chargement ============================ */
+
+const LS_KEY = "optimiseur-decoupe-projets";
+
+function lsProjects() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch (e) { return {}; }
+}
+
+function saveProject() {
+  const name = prompt("Nom du projet :", "Mon projet");
+  if (!name) return;
+  const projects = lsProjects();
+  projects[name] = {
+    date: new Date().toISOString(),
+    state: JSON.parse(JSON.stringify(state)),
+    settings: {
+      unit: $("#set-unit").value,
+      kerf: $("#set-kerf").value,
+      dec: $("#set-dec").value,
+      order: $("#set-order").value
+    }
+  };
+  localStorage.setItem(LS_KEY, JSON.stringify(projects));
+  alert('Projet "' + name + '" sauvegardé.');
+}
+
+function exportBackup() {
+  const projects = lsProjects();
+  if (!Object.keys(projects).length) { alert("Aucun projet sauvegardé à exporter."); return; }
+  const payload = { app: "IMBRIK", version: 1, exported: new Date().toISOString(), projects };
+  download("imbrik-sauvegarde.json", new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
+}
+
+function validProjectEntry(pr) {
+  return pr && typeof pr === "object" && pr.state && Array.isArray(pr.state.parts) && Array.isArray(pr.state.stock);
+}
+
+function importBackupFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try { data = JSON.parse(reader.result); } catch (e) { alert("Fichier illisible : ce n'est pas un JSON valide."); return; }
+    const imported = (data && typeof data === "object" && data.projects && typeof data.projects === "object")
+      ? data.projects
+      : (data && typeof data === "object" && !Array.isArray(data) ? data : null);
+    if (!imported) { alert("Structure non reconnue : fichier de sauvegarde IMBRIK attendu."); return; }
+    const names = Object.keys(imported).filter(n => validProjectEntry(imported[n]));
+    if (!names.length) { alert("Aucun projet valide trouvé dans le fichier."); return; }
+    const pr = lsProjects();
+    names.forEach(n => { pr[n] = imported[n]; });
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(pr));
+    } catch (e) {
+      alert("Import impossible : stockage local plein.");
+      return;
+    }
+    alert(names.length + " projet(s) importé(s) :\n" + names.join(", "));
+    loadProjectModal();
+  };
+  reader.readAsText(file);
+}
+
+function importBackup() {
+  const inp = document.createElement("input");
+  inp.type = "file";
+  inp.accept = ".json,application/json";
+  inp.addEventListener("change", () => {
+    if (inp.files && inp.files[0]) importBackupFile(inp.files[0]);
+  });
+  inp.click();
+}
+
+function openModal(title, bodyHtml) {
+  $("#modal-title").textContent = title;
+  $("#modal-body").innerHTML = bodyHtml;
+  $("#modal-back").classList.add("open");
+}
+
+function showLicenseModal() {
+  openModal("Licence AGPLv3", '<div class="license-text">' +
+    '<span class="license-badge">GNU Affero General Public License v3</span>' +
+    "<p>IMBRIK est un <b>logiciel libre</b> distribué sous licence AGPLv3. Cette licence garantit votre liberté d'utiliser, d'étudier, de modifier et de redistribuer le logiciel.</p>" +
+    "<h4>Ce que vous pouvez faire</h4>" +
+    "<ul>" +
+    "<li>Utiliser IMBRIK gratuitement, pour un usage personnel ou professionnel</li>" +
+    "<li>Étudier son fonctionnement et modifier son code source</li>" +
+    "<li>Redistribuer des copies, modifiées ou non</li>" +
+    "</ul>" +
+    "<h4>Vos obligations</h4>" +
+    "<ul>" +
+    "<li>Conserver les mentions de licence et de copyright</li>" +
+    "<li>Fournir le code source avec toute distribution</li>" +
+    "<li>Indiquer les modifications apportées</li>" +
+    "<li>En cas d'utilisation via un réseau (service web), fournir le code source aux utilisateurs du service</li>" +
+    "</ul>" +
+    "<h4>Aucune garantie</h4>" +
+    "<p>Ce logiciel est fourni « tel quel », sans garantie d'aucune sorte, expresse ou implicite.</p>" +
+    '<p>Texte complet de la licence : <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener">gnu.org/licenses/agpl-3.0.html</a></p>' +
+    '<div class="license-footer">Développé pour la section Bois de Genech — B. Dupont</div>' +
+    "</div>");
+}
+
+function loadProjectModal() {
+  const projects = lsProjects();
+  const names = Object.keys(projects).sort();
+  if (!names.length) {
+    openModal("Charger un projet", "<p>Aucun projet sauvegardé.</p>");
+    return;
+  }
+  const html = names.map(n =>
+    '<div class="list-item"><span class="name" data-load="' + esc(n) + '">' + esc(n) +
+    ' <small style="color:var(--muted)">(' + new Date(projects[n].date).toLocaleDateString("fr-FR") + ")</small></span>" +
+    '<button class="icon" data-delproj="' + esc(n) + '">×</button></div>').join("");
+  openModal("Charger un projet", html);
+}
+
+function handleModalClick(e) {
+  const load = e.target.getAttribute && e.target.getAttribute("data-load");
+  const del = e.target.getAttribute && e.target.getAttribute("data-delproj");
+  if (load) {
+    const pr = lsProjects()[load];
+    if (pr) {
+      state = JSON.parse(JSON.stringify(pr.state));
+      // un fil sauvegardé (non vide) est un choix délibéré : le pré-remplissage
+      // automatique ne doit pas l'écraser
+      state.parts.forEach(p => { if (p.grain) p.grainSet = true; });
+      const st = pr.settings || {};
+      if (st.unit !== undefined) $("#set-unit").value = st.unit;
+      if (st.kerf !== undefined) $("#set-kerf").value = st.kerf;
+      if (st.dec !== undefined) $("#set-dec").value = st.dec;
+      if (st.order !== undefined) $("#set-order").value = st.order;
+      applyAutoDefaults();
+      renderParts();
+      renderStock();
+      $("#modal-back").classList.remove("open");
+      calculate();
+    }
+  } else if (del) {
+    if (confirm('Supprimer le projet "' + del + '" ?')) {
+      const pr = lsProjects();
+      delete pr[del];
+      localStorage.setItem(LS_KEY, JSON.stringify(pr));
+      loadProjectModal();
+    }
+  }
+}
+
+/* ============================ Initialisation ============================ */
+
+function resetAll() {
+  if (!confirm("Effacer toutes les pièces et panneaux ?")) return;
+  state = { parts: [], stock: [] };
+  renderParts();
+  renderStock();
+  $("#results").innerHTML = '<div class="empty-msg">Ajoutez vos pièces et vos panneaux : le plan de coupe se recalcule automatiquement à chaque modification.</div>';
+  lastResult = null;
+}
+
+// Recalcul automatique : le plan de coupe se met à jour tout seul après chaque
+// modification (léger différé pour laisser finir la saisie)
+let calcTimer = null;
+function scheduleCalc() {
+  if (calcTimer) clearTimeout(calcTimer);
+  calcTimer = setTimeout(() => { calcTimer = null; calculate(); }, 250);
+}
+
+bindTable("#parts-table", state.parts, renderParts);
+// Le fil choisi manuellement dans le menu déroulant est un choix délibéré :
+// le pré-remplissage automatique ne doit pas l'écraser
+$("#parts-table").addEventListener("input", (e) => {
+  const t = e.target;
+  if (t.getAttribute("data-f") !== "grain") return;
+  const i = parseInt(t.getAttribute("data-i"), 10);
+  if (state.parts[i]) state.parts[i].grainSet = true;
+});
+bindTable("#stock-table", state.stock, () => { applyAutoDefaults(); renderStock(); renderParts(); });
+// Le libellé d'un panneau modifié doit se répercuter dans les sélecteurs des pièces.
+// Changer le fil d'un panneau applique ce fil à toute la colonne « Fil » des
+// pièces à découper, quand tous les panneaux du stock partagent le même fil.
+$("#stock-table").addEventListener("input", (e) => {
+  applyAutoDefaults();
+  const t = e.target;
+  if (t.getAttribute && t.getAttribute("data-f") === "grain") {
+    const grains = [...new Set(state.stock.map(s => (s.grain === "L" || s.grain === "W") ? s.grain : ""))];
+    if (grains.length === 1) state.parts.forEach(p => { p.grain = grains[0]; });
+  }
+  renderParts();
+});
+$("#btn-add-part").addEventListener("click", () => {
+  state.parts.push({ label: "", w: "", h: "", qty: "1", grain: "", stockRef: "", color: randomPartColor() });
+  applyAutoDefaults();
+  renderParts();
+  const items = $("#parts-table").querySelectorAll(".part-item");
+  const last = items[items.length - 1];
+  if (last) {
+    const inp = last.querySelector(".part-head input");
+    if (inp) inp.focus();
+  }
+  scheduleCalc();
+});
+$("#btn-add-stock").addEventListener("click", () => {
+  state.stock.push({ label: "", w: "", h: "", qty: "1", grain: "L", cutDir: "W", sid: newSid() });
+  applyAutoDefaults();
+  renderStock();
+  renderParts(); // rafraîchit la liste des panneaux dans le sélecteur des pièces
+  const items = $("#stock-table").querySelectorAll(".stock-item");
+  const last = items[items.length - 1];
+  if (last) {
+    const inp = last.querySelector(".stock-head input");
+    if (inp) inp.focus();
+  }
+  scheduleCalc();
+});
+// Toute modification relance le calcul automatiquement
+["#parts-table", "#stock-table"].forEach(sel => {
+  $(sel).addEventListener("input", scheduleCalc);
+  $(sel).addEventListener("click", scheduleCalc);
+});
+["#set-unit", "#set-kerf", "#set-dec", "#set-order"].forEach(sel => $(sel).addEventListener("input", scheduleCalc));
+$("#btn-calc").addEventListener("click", calculate);
+// Menu burger : ouverture, fermeture au clic extérieur et après chaque action
+const appMenu = $("#app-menu");
+$("#btn-menu").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const open = appMenu.classList.toggle("open");
+  $("#btn-menu").setAttribute("aria-expanded", open ? "true" : "false");
+});
+appMenu.addEventListener("click", () => {
+  appMenu.classList.remove("open");
+  $("#btn-menu").setAttribute("aria-expanded", "false");
+});
+document.addEventListener("click", (e) => {
+  if (appMenu.classList.contains("open") && !appMenu.contains(e.target) && !$("#btn-menu").contains(e.target)) {
+    appMenu.classList.remove("open");
+    $("#btn-menu").setAttribute("aria-expanded", "false");
+  }
+});
+$("#btn-save").addEventListener("click", saveProject);
+$("#btn-load").addEventListener("click", loadProjectModal);
+$("#btn-export-bak").addEventListener("click", exportBackup);
+$("#btn-import-bak").addEventListener("click", importBackup);
+$("#modal-body").addEventListener("click", handleModalClick);
+$("#btn-csv").addEventListener("click", exportCSV);
+$("#btn-img").addEventListener("click", exportImage);
+$("#btn-print").addEventListener("click", () => window.print());
+$("#btn-reset").addEventListener("click", resetAll);
+$("#btn-license").addEventListener("click", showLicenseModal);
+$("#modal-close").addEventListener("click", () => $("#modal-back").classList.remove("open"));
+$("#modal-back").addEventListener("click", (e) => {
+  if (e.target === $("#modal-back")) $("#modal-back").classList.remove("open");
+});
+
+document.querySelectorAll(".hint-toggle").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const wrap = btn.closest(".hint-wrap");
+    const open = wrap.classList.toggle("open");
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    const label = btn.querySelector("span");
+    if (label) label.textContent = open ? "Masquer l'aide" : "Aide";
+  });
+});
+
+applyAutoDefaults();
+renderParts();
+renderStock();
+</script>
+</body>
+</html>

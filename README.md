@@ -11,6 +11,10 @@
 - Minimisation des chutes et du gaspillage de matière
 - Export du plan de découpe
 
+## Code source
+
+L'application est un fichier HTML autonome, 100 % local (aucune donnée envoyée) : [`Imbrik-v1.4.2.html`](Imbrik-v1.4.2.html). Ouvrez-le directement dans un navigateur pour l'utiliser.
+
 ## Téléchargement
 
 La version 1.4.2 est disponible dans les [releases](https://github.com/GitKernelDesign/Imbrik/releases) :
