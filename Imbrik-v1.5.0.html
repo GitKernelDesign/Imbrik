@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/svg+xml" href="icon.svg">
-<title>IMBRIK - Optimiseur de Découpe</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%236366f1'/%3E%3Crect x='8' y='4.5' width='8' height='5.5' rx='1.5' fill='white'/%3E%3Crect x='8' y='12' width='8' height='8' rx='1.5' fill='white' fill-opacity='0.7'/%3E%3C/svg%3E">
+<meta name="description" content="IMBRIK — optimiseur de découpe de panneaux : plan de coupe guillotine, calcul des chutes, export CSV/PNG. 100 % local, aucune donnée envoyée.">
+<title>IMBRIK 1.5.0 - Optimiseur de Découpe</title>
 <style>
   :root {
     --bg: #eef1f6;
@@ -493,6 +494,15 @@
     padding: 9px 10px;
   }
 
+  /* Deuxième ligne : épaisseur + matière */
+  .stock-item .fields-extra,
+  .part-item .fields-extra {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 0.7fr 1.6fr;
+    gap: 8px;
+  }
+
   .stock-item .field label,
   .part-item .field label {
     font-size: 9.5px;
@@ -911,9 +921,29 @@
   .modal .close-row {
     display: flex;
     justify-content: flex-end;
+    gap: 8px;
     margin-top: 16px;
     padding-top: 14px;
     border-top: 1px solid var(--border);
+  }
+
+  /* ============ Dialogue générique (confirmation / saisie) ============ */
+  .modal .dialog-input-wrap { margin: 12px 0 0; }
+  .modal .dialog-input-wrap input { width: 100%; }
+  .modal .dialog-body { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+  .modal .dialog-body p { margin: 0; }
+
+  /* ============ Barre d'actions du plan ============ */
+  .plan-tools {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .plan-tools button {
+    font-size: 12.5px;
+    padding: 6px 12px;
   }
 
   /* ============ License modal ============ */
@@ -978,7 +1008,7 @@
 
   /* ============ Print ============ */
   @media print {
-    header, #btn-calc, .panel, .btn-add, .no-print { display: none !important; }
+    header, #btn-calc, .panel, .btn-add, .no-print, .plan-tools, .modal-back, #tooltip { display: none !important; }
     main { grid-template-columns: 1fr; padding: 0; }
     body { background: #fff; }
     .sheet-card { break-inside: avoid; page-break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
@@ -1009,7 +1039,7 @@
       </svg>
     </div>
     <div>
-      <h1>IMBRIK <span class="version">v1.4.2</span></h1>
+      <h1>IMBRIK <span class="version">v1.5.0</span></h1>
       <div class="sub">Imbrication de pièces sur panneaux — 100 % local, aucune donnée envoyée</div>
       <div class="sub">Développé pour la section Bois de Genech — B.Dupont — Licence AGPLv3</div>
     </div>
@@ -1123,13 +1153,24 @@
             <option value="WL">Largeur × Longueur</option>
           </select>
         </div>
+        <div>
+          <label for="set-objective" title="Critère d'optimisation : « Moins de panneaux » privilégie les grands formats, « Moins de matière » choisit le panneau qui se remplit le mieux (surface consommée minimale).">Objectif</label>
+          <select id="set-objective">
+            <option value="panels">Moins de panneaux</option>
+            <option value="material">Moins de matière</option>
+          </select>
+        </div>
+        <div>
+          <label for="set-trim" title="Marge retirée sur les quatre bords du panneau (délignage, équerrage) avant placement des pièces. 0 = pas de marge.">Marge de rabotage</label>
+          <input type="number" id="set-trim" min="0" step="any" value="0">
+        </div>
       </div>
       <div class="hint-wrap">
         <button class="hint-toggle" type="button" aria-expanded="false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           <span>Aide</span>
         </button>
-        <div class="hint">La largeur de coupe (épaisseur de la lame / du laser) est déduite entre chaque coupe. 0 = coupe sans perte. Optimisation : les pièces identiques sont posées côte à côte dans des bandes homogènes, chacune détachée du reste du panneau par une seule coupe sur la largeur. Les chutes récupérables sont affichées en pointillés : chacune est un rectangle qui se détache du panneau en une seule coupe (bas du panneau, colonne de droite ou reste d'une bande).</div>
+        <div class="hint">La largeur de coupe (épaisseur de la lame / du laser) est déduite entre chaque coupe. 0 = coupe sans perte. La <b>marge de rabotage</b> retire une bande sur les quatre bords du panneau (délignage, équerrage) : la zone utile est rappelée en pointillés sur le plan.<br><br><b>Objectif</b> : « Moins de panneaux » place les plus grandes pièces sur les plus grands panneaux et réduit le nombre de plaques entamées ; « Moins de matière » choisit à chaque plaque le format qui se remplit le mieux, ce qui réduit la surface consommée quand plusieurs formats sont en stock (quitte à utiliser plus de petits panneaux).<br><br>Optimisation : les pièces identiques sont posées côte à côte dans des bandes homogènes, chacune détachée du panneau par une seule coupe. Les deux zones libres (colonne de droite et bandeau du bas) sont ensuite reprises par le même principe, ce qui remplit mieux le panneau qu'une simple pile de bandes. Le plan reste <b>guillotine</b> : toutes les coupes traversent la pièce en cours de découpe. Les chutes récupérables sont affichées en pointillés : chacune est un rectangle qui se détache du panneau en une seule coupe (bas du panneau, colonne de droite ou reste d'une bande).</div>
       </div>
     </div>
   </div>
@@ -1149,24 +1190,48 @@
   </div>
 </div>
 
+<div class="modal-back" id="dialog-back">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+    <h3 id="dialog-title"></h3>
+    <div id="dialog-body" class="dialog-body"></div>
+    <div class="dialog-input-wrap" id="dialog-input-wrap">
+      <input type="text" id="dialog-input">
+    </div>
+    <div class="close-row">
+      <button id="dialog-cancel">Annuler</button>
+      <button id="dialog-ok" class="primary">Valider</button>
+    </div>
+  </div>
+</div>
+
 <script>
 "use strict";
 
 /* ============================ État ============================ */
 
-let state = {
-  parts: [
-    { label: "Côté",      w: "2000", h: "400",  qty: "4", grain: ""  },
-    { label: "Étagère",  w: "900",  h: "350",  qty: "8", grain: ""  },
-    { label: "Dos",      w: "1200", h: "600",  qty: "3", grain: ""  },
-    { label: "Traverse", w: "380",  h: "60",   qty: "16", grain: "" }
-  ],
-  stock: [
-    { label: "Panneau 18mm", w: "2440", h: "1220", qty: "5", grain: "L", cutDir: "W" }
-  ]
-};
+function defaultState() {
+  return {
+    parts: [
+      { label: "Côté",      w: "2000", h: "400", qty: "4",  grain: "", th: "", mat: "" },
+      { label: "Étagère",   w: "900",  h: "350", qty: "8",  grain: "", th: "", mat: "" },
+      { label: "Dos",       w: "1200", h: "600", qty: "3",  grain: "", th: "", mat: "" },
+      { label: "Traverse",  w: "380",  h: "60",  qty: "16", grain: "", th: "", mat: "" }
+    ],
+    stock: [
+      { label: "Panneau 18mm", w: "2440", h: "1220", qty: "5", grain: "L", cutDir: "W", th: "", mat: "", sid: null }
+    ]
+  };
+}
 
-let lastResult = null;   // résultat du dernier calcul (pour exports)
+let state = defaultState();
+
+let lastResult = null;       // résultat du dernier calcul réussi (pour les exports)
+let lastPlanHtml = "";       // dernier plan affiché, conservé pendant une saisie incomplète
+
+const STORAGE_KEYS = {
+  projects: "optimiseur-decoupe-projets",   // projets nommés (compatibilité)
+  work: "imbrik-etat-courant"               // sauvegarde automatique de l'état courant
+};
 
 /* ============================ Utilitaires ============================ */
 
@@ -1210,8 +1275,35 @@ function unitSuffix() {
   return u === "in" ? '"' : (u ? " " + u : "");
 }
 
+// Une surface s'exprime dans l'unité au carré (mm², cm², m²…)
+function unitAreaSuffix() {
+  const u = $("#set-unit").value;
+  return u === "in" ? '"²' : (u ? " " + u + "²" : "");
+}
+
+// Nombre lisible : séparateur de milliers, décimales de l'affichage
+function fmtBig(v, dec) {
+  const n = Number(v);
+  if (!isFinite(n)) return "0";
+  return n.toLocaleString("fr-FR", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+
 function esc(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+// Texte sûr pour un attribut ou une valeur de champ (objets/tableaux rejetés)
+function str(v) {
+  if (v === null || v === undefined) return "";
+  if (typeof v === "object") return "";
+  return String(v);
+}
+
+// Couleur valide uniquement (protège le style inline contre un JSON bricolé)
+const COLOR_RE = /^(#[0-9a-f]{3,8}|hsla?\([0-9.,%\s]+\))$/i;
+function safeColor(c) {
+  const v = str(c).trim();
+  return COLOR_RE.test(v) ? v : "";
 }
 
 const PALETTE = [
@@ -1219,9 +1311,7 @@ const PALETTE = [
   "#c98f4d", "#7fa650", "#c96da0", "#6a8caf", "#b5893c", "#8fd18f"
 ];
 
-// Couleurs des pièces — palette Material Design extraite de couleurs.jpg
-// (poster 16 teintes : nuances 50→900 + accents A100→A700 ; le blanc et les
-// gris 50/100 sont exclus, invisibles sur le fond du plan de coupe).
+// Couleurs des pièces — palette Material Design
 const PART_COLORS = [
   "#efebe9", "#d7ccc8", "#bcaaa4", "#a1887f", "#8d6e63", "#795548",
   "#6d4c41", "#5d4037", "#4e342e", "#3e2723", "#eeeeee", "#e0e0e0",
@@ -1261,8 +1351,6 @@ const PART_COLORS = [
   "#000000"
 ];
 
-// Couleur attribuée à une pièce à sa création : une teinte tirée au
-// hasard dans la liste, de préférence distincte des couleurs déjà utilisées.
 function randomPartColor() {
   const used = new Set(state.parts.map(p => p.color).filter(Boolean));
   const dispo = PART_COLORS.filter(c => !used.has(c));
@@ -1270,8 +1358,6 @@ function randomPartColor() {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-// Couleur du libellé tracé sur une pièce : celle (foncée ou blanche) qui offre
-// le meilleur contraste avec la couleur de la pièce (lisibilité SVG et export).
 function labelColorFor(bg) {
   const m = /hsl\(\s*\d+,\s*\d+%,\s*(\d+)%\s*\)/.exec(bg || "");
   if (m) return parseInt(m[1], 10) >= 65 ? "#1e2530" : "#ffffff";
@@ -1280,58 +1366,106 @@ function labelColorFor(bg) {
     const n = parseInt(hex[1], 16);
     const lin = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
     const l = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
-    // Au-delà de cette luminance, le texte foncé contraste mieux que le blanc
     return l > 0.217 ? "#1e2530" : "#ffffff";
   }
   return "#ffffff";
 }
 
-// Toute pièce sans couleur (ancien projet chargé, pièce par défaut) en reçoit
-// une, une seule fois : la couleur reste stable ensuite.
 function ensureColors() {
   state.parts.forEach(p => { if (!p.color) p.color = randomPartColor(); });
 }
 
-// Accepte une pièce (objet avec .color) ou un libellé (string)
 function colorFor(partOrLabel) {
-  if (partOrLabel && typeof partOrLabel !== "string") {
-    if (partOrLabel.color) return partOrLabel.color;
-  }
+  if (partOrLabel && typeof partOrLabel !== "string" && partOrLabel.color) return partOrLabel.color;
   const label = (typeof partOrLabel === "string" ? partOrLabel : (partOrLabel && partOrLabel.label) || "").trim();
   const p = state.parts.find(p => (p.label || "").trim() === label);
   if (p && p.color) return p.color;
-  // Repli : palette par ordre d'apparition (pièce sans couleur attribuée)
   const labels = [...new Set(state.parts.map(p => (p.label || "").trim()))];
   const i = Math.max(0, labels.indexOf(label));
   return PALETTE[i % PALETTE.length];
 }
 
+/* ============================ Normalisation des données ============================ */
+
+// Tout état venant de l'extérieur (projet chargé, fichier importé, sauvegarde
+// automatique) est reconstruit champ par champ : une entrée corrompue est écartée
+// au lieu de faire planter l'application.
+function sanitizePart(p) {
+  if (!p || typeof p !== "object" || Array.isArray(p)) return null;
+  return {
+    label: str(p.label), w: str(p.w), h: str(p.h), qty: str(p.qty),
+    grain: (p.grain === "L" || p.grain === "W") ? p.grain : "",
+    grainSet: !!p.grainSet,
+    thSet: !!p.thSet,
+    matSet: !!p.matSet,
+    stockRef: str(p.stockRef),
+    color: safeColor(p.color),
+    th: str(p.th), mat: str(p.mat)
+  };
+}
+
+function sanitizeStock(s) {
+  if (!s || typeof s !== "object" || Array.isArray(s)) return null;
+  return {
+    label: str(s.label), w: str(s.w), h: str(s.h), qty: str(s.qty),
+    grain: (s.grain === "L" || s.grain === "W") ? s.grain : "",
+    cutDir: (s.cutDir === "L" || s.cutDir === "W") ? s.cutDir : "",
+    sid: /^s\d+$/.test(str(s.sid)) ? str(s.sid) : "",
+    th: str(s.th), mat: str(s.mat)
+  };
+}
+
+function sanitizeState(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const parts = Array.isArray(raw.parts) ? raw.parts.map(sanitizePart).filter(Boolean) : null;
+  const stock = Array.isArray(raw.stock) ? raw.stock.map(sanitizeStock).filter(Boolean) : null;
+  if (!parts || !stock) return null;
+  return { parts, stock };
+}
+
+function validProjectEntry(pr) {
+  return !!(pr && typeof pr === "object" && sanitizeState(pr.state));
+}
+
 /* ============================ Rendu des tableaux ============================ */
 
 function grainSelect(i, cur, allowNone) {
+  const a = 'aria-label="Sens du fil, ligne ' + (i + 1) + '"';
   let o = "";
   if (allowNone) o += '<option value=""' + (cur === "L" || cur === "W" ? "" : " selected") + '>Indifférent</option>';
   o += '<option value="L"' + (cur === "L" ? " selected" : "") + '>Longueur</option>';
   o += '<option value="W"' + (cur === "W" ? " selected" : "") + '>Largeur</option>';
-  return '<select data-i="' + i + '" data-f="grain">' + o + "</select>";
+  return '<select data-i="' + i + '" data-f="grain" ' + a + ">" + o + "</select>";
 }
 
 function stockPanelSelect(i, cur) {
   let o = '<option value=""' + (cur ? "" : " selected") + '>Tous</option>';
   state.stock.forEach((s, k) => {
     const name = (s.label || "").trim() || "Panneau " + (k + 1);
-    o += '<option value="' + esc(s.sid) + '"' + (cur === s.sid ? " selected" : "") + '>' + esc(name) + "</option>";
+    o += '<option value="' + esc(s.sid) + '"' + (cur === s.sid ? " selected" : "") + ">" + esc(name) + "</option>";
   });
-  return '<select data-i="' + i + '" data-f="stockRef">' + o + "</select>";
+  return '<select data-i="' + i + '" data-f="stockRef" aria-label="Panneau réservé, ligne ' + (i + 1) + '">' + o + "</select>";
 }
 
 function cutDirSelect(i, cur) {
-  // undefined (ancien projet) → "W" par défaut ; "" → Indifférent ; "L"/"W" → respectif
   const val = (cur === "L" || cur === "W" || cur === "") ? cur : "W";
-  let o = '<option value=""' + (val === "" ? " selected" : "") + '>Indifférent</option>';
+  let o = '<option value=""' + (val === "" ? " selected" : "") + ">Indifférent</option>";
   o += '<option value="L"' + (val === "L" ? " selected" : "") + ">Longueur d'abord</option>";
   o += '<option value="W"' + (val === "W" ? " selected" : "") + ">Largeur d'abord</option>";
-  return '<select data-i="' + i + '" data-f="cutDir">' + o + "</select>";
+  return '<select data-i="' + i + '" data-f="cutDir" aria-label="Sens de coupe, ligne ' + (i + 1) + '">' + o + "</select>";
+}
+
+// Champs communs aux deux tableaux : épaisseur + matière
+function extraFields(i, item, kind) {
+  const th = str(item.th), mat = str(item.mat);
+  return '<div class="fields-extra">' +
+    '<div class="field"><label>Ép.</label>' +
+    '<input type="number" step="any" min="0" value="' + esc(th) + '" data-i="' + i + '" data-f="th" ' +
+    'aria-label="Épaisseur, ' + kind + " " + (i + 1) + '" placeholder="18"></div>' +
+    '<div class="field"><label>Matière</label>' +
+    '<input type="text" value="' + esc(mat) + '" data-i="' + i + '" data-f="mat" ' +
+    'aria-label="Matière, ' + kind + " " + (i + 1) + '" placeholder="CP bouleau, MDF…"></div>' +
+    "</div>";
 }
 
 function renderParts() {
@@ -1345,21 +1479,22 @@ function renderParts() {
     item.className = "part-item";
     item.innerHTML =
       '<div class="part-head">' +
-      '<span class="part-color" style="background:' + esc(p.color) + '" title="Couleur de la pièce dans le plan de coupe"></span>' +
-      '<input type="text" value="' + esc(p.label) + '" data-i="' + i + '" data-f="label" placeholder="Libellé de la pièce (ex. : Côté, Étagère…)">' +
-      '<button class="icon" data-del="' + i + '" title="Supprimer la pièce">×</button>' +
+      '<span class="part-color" style="background:' + esc(safeColor(p.color) || "#8d6e63") + '" title="Couleur de la pièce dans le plan de coupe"></span>' +
+      '<input type="text" value="' + esc(p.label) + '" data-i="' + i + '" data-f="label" aria-label="Libellé, pièce ' + (i + 1) + '" placeholder="Libellé de la pièce (ex. : Côté, Étagère…)">' +
+      '<button class="icon" data-del="' + i + '" title="Supprimer la pièce" aria-label="Supprimer la pièce ' + (i + 1) + '">×</button>' +
       "</div>" +
       '<div class="part-fields">' +
       '<div class="field"><label>Long.</label>' +
-      '<input type="number" step="any" min="0" value="' + esc(p.w) + '" data-i="' + i + '" data-f="w" placeholder="0"></div>' +
+      '<input type="number" step="any" min="0" value="' + esc(p.w) + '" data-i="' + i + '" data-f="w" aria-label="Longueur, pièce ' + (i + 1) + '" placeholder="0"></div>' +
       '<div class="field"><label>Larg.</label>' +
-      '<input type="number" step="any" min="0" value="' + esc(p.h) + '" data-i="' + i + '" data-f="h" placeholder="0"></div>' +
+      '<input type="number" step="any" min="0" value="' + esc(p.h) + '" data-i="' + i + '" data-f="h" aria-label="Largeur, pièce ' + (i + 1) + '" placeholder="0"></div>' +
       '<div class="field"><label>Qté</label>' +
-      '<input type="number" step="1" min="1" value="' + esc(p.qty) + '" data-i="' + i + '" data-f="qty" placeholder="1"></div>' +
+      '<input type="number" step="1" min="1" value="' + esc(p.qty) + '" data-i="' + i + '" data-f="qty" aria-label="Quantité, pièce ' + (i + 1) + '" placeholder="1"></div>' +
       '<div class="field"><label title="Sens du fil du bois de la pièce : « Indifférent » laisse l\'optimiseur faire pivoter la pièce quand c\'est plus rangé">Fil</label>' +
       grainSelect(i, p.grain, true) + "</div>" +
       '<div class="field"><label title="Panneau du stock réservé à cette pièce (« Tous » par défaut)">Panneau</label>' +
       stockPanelSelect(i, ref) + "</div>" +
+      extraFields(i, p, "pièce") +
       "</div>";
     container.appendChild(item);
   });
@@ -1374,144 +1509,130 @@ function renderStock() {
     item.className = "stock-item";
     item.innerHTML =
       '<div class="stock-head">' +
-      '<input type="text" value="' + esc(s.label) + '" data-i="' + i + '" data-f="label" placeholder="Libellé du panneau (ex. : Panneau 18 mm)">' +
-      '<button class="icon" data-del="' + i + '" title="Supprimer le panneau">×</button>' +
+      '<input type="text" value="' + esc(s.label) + '" data-i="' + i + '" data-f="label" aria-label="Libellé, panneau ' + (i + 1) + '" placeholder="Libellé du panneau (ex. : Panneau 18 mm)">' +
+      '<button class="icon" data-del="' + i + '" title="Supprimer le panneau" aria-label="Supprimer le panneau ' + (i + 1) + '">×</button>' +
       "</div>" +
       '<div class="stock-fields">' +
       '<div class="field"><label>Long.</label>' +
-      '<input type="number" step="any" min="0" value="' + esc(s.w) + '" data-i="' + i + '" data-f="w" placeholder="0"></div>' +
+      '<input type="number" step="any" min="0" value="' + esc(s.w) + '" data-i="' + i + '" data-f="w" aria-label="Longueur, panneau ' + (i + 1) + '" placeholder="0"></div>' +
       '<div class="field"><label>Larg.</label>' +
-      '<input type="number" step="any" min="0" value="' + esc(s.h) + '" data-i="' + i + '" data-f="h" placeholder="0"></div>' +
+      '<input type="number" step="any" min="0" value="' + esc(s.h) + '" data-i="' + i + '" data-f="h" aria-label="Largeur, panneau ' + (i + 1) + '" placeholder="0"></div>' +
       '<div class="field"><label>Qté</label>' +
-      '<input type="number" step="1" min="0" value="' + esc(s.qty) + '" data-i="' + i + '" data-f="qty" placeholder="0"></div>' +
+      '<input type="number" step="1" min="0" value="' + esc(s.qty) + '" data-i="' + i + '" data-f="qty" aria-label="Quantité, panneau ' + (i + 1) + '" placeholder="0"></div>' +
       '<div class="field"><label title="Sens du fil du bois du panneau">Fil</label>' +
       grainSelect(i, s.grain, true) + "</div>" +
       '<div class="field"><label title="Sens de la première coupe : « Longueur d\'abord » découpe le panneau en bandes dans le sens de la longueur (manutention minimale), « Largeur d\'abord » dans le sens de la largeur. « Indifférent » laisse l\'optimiseur choisir l\'orientation la plus efficace.">Coupe</label>' +
       cutDirSelect(i, s.cutDir) + "</div>" +
+      extraFields(i, s, "panneau") +
       "</div>";
     container.appendChild(item);
   });
 }
 
-function bindTable(tableId, arr, rerender) {
+// Les tableaux sont lus à travers un accesseur : l'état peut être remplacé
+// (réinitialisation, chargement de projet) sans que les écouteurs deviennent
+// obsolètes. C'était la cause d'un bug bloquant en 1.4.2.
+function bindTable(tableId, getArr, rerender) {
   const table = $(tableId);
   table.addEventListener("input", (e) => {
     const t = e.target;
     const i = t.getAttribute("data-i"), f = t.getAttribute("data-f");
     if (i === null || f === null) return;
-    arr[i][f] = f === "rot" ? t.checked : t.value;
+    const arr = getArr();
+    if (!arr[i]) return;
+    arr[i][f] = t.value;
   });
   table.addEventListener("click", (e) => {
-    const del = e.target.getAttribute("data-del");
-    if (del !== null) { arr.splice(parseInt(del, 10), 1); rerender(); }
+    const del = e.target.getAttribute && e.target.getAttribute("data-del");
+    if (del !== null && del !== undefined) {
+      const arr = getArr();
+      arr.splice(parseInt(del, 10), 1);
+      rerender();
+      scheduleCalc();
+    }
   });
 }
 
 /* ---------- Pré-remplissage automatique des pièces selon le stock ---------- */
 
-// Remplit uniquement les champs laissés vides (« Indifférent » / « Tous »),
-// sans jamais écraser un choix explicite de l'utilisateur.
+// Remplit uniquement les champs laissés vides, sans jamais écraser un choix
+// explicite de l'utilisateur.
 function applyAutoDefaults() {
   ensureSids();
-  // Fil : si tous les panneaux du stock partagent le même fil (longueur ou largeur),
-  // les pièces sans fil imposé l'héritent pour que le calcul se fasse dans le bon sens.
   const grains = [...new Set(state.stock.map(s => (s.grain === "L" || s.grain === "W") ? s.grain : "").filter(Boolean))];
   const commonGrain = grains.length === 1 ? grains[0] : "";
-  // Panneau : s'il n'existe qu'un seul type de panneau, les pièces « Tous » pointent dessus.
   const singleSid = state.stock.length === 1 ? state.stock[0].sid : "";
+
+  // Une pièce sans matière / épaisseur hérite de celle du stock quand tous les
+  // panneaux partagent la même : évite un mélange silencieux de matières.
+  const mats = [...new Set(state.stock.map(s => str(s.mat).trim().toLowerCase()).filter(Boolean))];
+  const commonMat = (state.stock.length && mats.length === 1 &&
+    state.stock.every(s => str(s.mat).trim() !== "")) ? state.stock[0].mat : "";
+  const ths = [...new Set(state.stock.map(s => str(s.th).trim()).filter(Boolean))];
+  const commonTh = (state.stock.length && ths.length === 1 &&
+    state.stock.every(s => str(s.th).trim() !== "")) ? state.stock[0].th : "";
+
   state.parts.forEach(p => {
-    // pas de fil imposé aux pièces dont la rotation était cochée dans un ancien
-    // projet (le fil forcerait l'orientation), ni à celles dont le fil a été
-    // choisi manuellement ou dans un projet sauvegardé
     if (commonGrain && !p.grain && !p.rot && !p.grainSet) p.grain = commonGrain;
     if (singleSid && !p.stockRef) p.stockRef = singleSid;
+    if (commonMat && !str(p.mat).trim() && !p.matSet) p.mat = commonMat;
+    if (commonTh && !str(p.th).trim() && !p.thSet) p.th = commonTh;
   });
 }
 
-/* ============================ Algorithme (bandes + kerf) ============================ */
+/* ============================ Algorithme (guillotine, 2 niveaux) ============================ */
 
-// Orientations possibles d'une pièce sur un panneau selon le fil imposé et la rotation
+function flipGrain(g) {
+  return g === "L" ? "W" : g === "W" ? "L" : g;
+}
+
+function normMat(v) { return str(v).trim().toLowerCase(); }
+
+// Épaisseur saisie -> nombre, ou null si non renseignée (= compatible avec tout)
+function toThickness(v) {
+  if (str(v).trim() === "") return null;
+  const n = parseDim(v);
+  return isFinite(n) && n > 0 ? n : null;
+}
+
+// Une pièce ne peut être posée que sur un panneau de même matière et de même
+// épaisseur (un champ vide de part et d'autre = pas de contrainte).
+function pieceFitsSheet(p, sheet) {
+  if (p.stockSid && p.stockSid !== sheet.sid) return false;
+  if (p.th !== null && p.th !== undefined && sheet.th !== null && sheet.th !== undefined &&
+      Math.abs(p.th - sheet.th) > 0.01) return false;
+  if (p.mat && sheet.mat && p.mat !== sheet.mat) return false;
+  return true;
+}
+
+// Orientations possibles d'une pièce sur un panneau selon le fil imposé
 function orientationsFor(p, sheetGrain) {
   if (p.grain && sheetGrain) {
-    // Fil imposé : la pièce n'est placée que si son fil s'aligne sur celui du panneau.
-    // Non pivotée, l'axe longueur/largeur de la pièce suit celui du panneau ;
-    // pivotée, les axes sont inversés. Panneau « Indifférent » : aucun alignement à respecter.
+    // Fil imposé : la pièce n'est placée que si son fil s'aligne sur celui du
+    // panneau. Pivotée, les axes longueur/largeur sont inversés.
     return (p.grain === sheetGrain) ? [[p.w, p.h, false]] : [[p.h, p.w, true]];
   }
   if (p.rotatable) return [[p.w, p.h, false], [p.h, p.w, true]];
   return [[p.w, p.h, false]];
 }
 
-// Découpe en bandes homogènes : les pièces identiques (mêmes dimensions, même fil,
-// même panneau réservé) sont posées côte à côte dans des bandes qui traversent le
-// panneau sur toute sa longueur — elles restent ainsi collées les unes aux autres.
-// Chaque bande est détachée du reste du panneau par une seule coupe sur la largeur.
-// Les pièces d'un type sont réparties équitablement entre ses bandes : des largeurs
-// de bandes voisines alignent les bords et concentrent l'espace libre en grandes
-// chutes rectangulaires (voir sheetChutes).
-//
-// Le paramètre cutDir contrôle le sens de la première coupe :
-//  - "L" : bandes dans le sens de la longueur (packing direct, comportement historique)
-//  - "W" : bandes dans le sens de la largeur (le panneau est pivoté de 90° avant
-//          le packing, puis les coordonnées sont retransposées dans le référentiel
-//          original — le fil du panneau est échangé en conséquence)
-//  - ""  : indifférent, les deux orientations sont essayées et la meilleure est
-//          retenue (plus de pièces placées ; à égalité, l'orientation directe).
-// Le résultat porte le drapeau « swapped » : true quand le packing retenu a été
-// fait dans le référentiel pivoté. Les chutes (sheetChutes) en ont besoin pour
-// être calculées dans le même référentiel que les pièces placées.
-function packSheet(sheetW, sheetH, pieces, kerf, sheetGrain, sheetSid, cutDir) {
-  // Packing dans un référentiel éventuellement pivoté, puis remise dans le
-  // référentiel original du panneau par transposition (x,y,w,h) -> (y,x,h,w).
-  const tryPack = (swap) => {
-    const w = swap ? sheetH : sheetW;
-    const h = swap ? sheetW : sheetH;
-    // Le fil du panneau est échangé quand on pivote le référentiel
-    const grain = swap
-      ? (sheetGrain === "L" ? "W" : sheetGrain === "W" ? "L" : sheetGrain)
-      : sheetGrain;
-    const r = packSheetInternal(w, h, pieces, kerf, grain, sheetSid);
-    if (swap) {
-      r.placed = r.placed.map(pl => ({
-        p: pl.p,
-        x: pl.y,
-        y: pl.x,
-        w: pl.h,
-        h: pl.w,
-        rotated: !pl.rotated
-      }));
-    }
-    r.swapped = swap;
-    return r;
-  };
-
-  if (cutDir === "W") return tryPack(true);
-  if (cutDir === "L") return tryPack(false);
-  // Indifférent : les deux orientations, on garde celle qui place le plus de pièces
-  const direct = tryPack(false);
-  const swapped = tryPack(true);
-  return swapped.placed.length > direct.placed.length ? swapped : direct;
-}
-
-function packSheetInternal(sheetW, sheetH, pieces, kerf, sheetGrain, sheetSid) {
-  const eligible = pieces.filter(p => !(p.stockSid && p.stockSid !== sheetSid)); // pièces réservées à un autre panneau
-  if (!eligible.length) return { placed: [], unused: [] };
-
-  // Regroupement des pièces par type
+// Meilleur empilement de bandes dans un rectangle (4 variantes essayées).
+// Les bandes traversent toute la largeur du rectangle : chaque bande se détache
+// par une seule coupe horizontale, les pièces d'une bande par des coupes
+// verticales — le plan reste donc guillotine, découpable à la scie à format.
+function bestBandLayout(pieces, rectW, rectH, kerf, sheetGrain) {
   const groups = new Map();
-  for (const p of eligible) {
-    const key = p.w + "|" + p.h + "|" + p.grain + "|" + p.stockSid + "|" + (p.rotatable ? "R" : "F");
+  for (const p of pieces) {
+    const key = p.w + "|" + p.h + "|" + p.grain + "|" + (p.rotatable ? "R" : "F");
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(p);
   }
 
-  // Découpe d'un type en bandes pour une orientation donnée :
-  //  - répartition équilibrée : largeurs de bandes voisines, qui alignent les bords
-  //    et concentrent l'espace libre en grandes chutes rectangulaires
-  //  - répartition pleine : chaque bande remplie au maximum avant la suivante
+  // - répartition équilibrée : largeurs de bandes voisines, qui alignent les bords
+  // - répartition pleine : chaque bande remplie au maximum avant la suivante
   const bandsFor = (list, o, balanced) => {
     const pw = o[0];
-    const perBand = Math.max(1, Math.floor((sheetW + kerf + 1e-9) / (pw + kerf)));
+    const perBand = Math.max(1, Math.floor((rectW + kerf + 1e-9) / (pw + kerf)));
     const nBands = Math.ceil(list.length / perBand);
     const bands = [];
     let i = 0;
@@ -1525,29 +1646,24 @@ function packSheetInternal(sheetW, sheetH, pieces, kerf, sheetGrain, sheetSid) {
     return bands;
   };
 
-  // Construction complète des bandes selon une stratégie d'orientation :
-  //  - "totalH" : répartition des pièces entre les deux orientations (quand la
-  //               rotation est autorisée) consommant le moins de hauteur de
-  //               panneau — la rotation est réellement utilisée dès qu'elle
-  //               améliore le rangement
-  //  - "ph"     : bandes les plus basses possible (s'insèrent plus facilement en fin de panneau)
-  // À égalité, l'orientation non pivotée est privilégiée.
+  //  - "totalH" : répartition des pièces entre les deux orientations consommant
+  //               le moins de hauteur — la rotation sert dès qu'elle améliore
+  //  - "ph"     : bandes les plus basses possible (s'insèrent mieux en fin de panneau)
   const buildBands = (strategy, balanced) => {
     const bands = [];
     for (const list of groups.values()) {
       const orients = orientationsFor(list[0], sheetGrain)
-        .filter(o => o[0] <= sheetW + 1e-9 && o[1] <= sheetH + 1e-9);
+        .filter(o => o[0] <= rectW + 1e-9 && o[1] <= rectH + 1e-9);
       if (!orients.length) continue; // ce type ne tient pas sur ce panneau
-      const per = orients.map(o => Math.max(1, Math.floor((sheetW + kerf + 1e-9) / (o[0] + kerf))));
+      const per = orients.map(o => Math.max(1, Math.floor((rectW + kerf + 1e-9) / (o[0] + kerf))));
       const n = list.length;
-      // répartition des n pièces : k dans la première orientation, n-k dans la seconde
       let best = null;
       for (let k = (orients.length > 1 ? 0 : n); k <= n; k++) {
         const cnt = [k, n - k];
         const h = orients.map((o, j) => cnt[j] ? Math.ceil(cnt[j] / per[j]) * o[1] : 0);
         const score = strategy === "totalH"
           ? h[0] + h[1]
-          : Math.max(...orients.filter((o, j) => cnt[j] > 0).map(o => o[1])); // bande la plus haute
+          : Math.max(...orients.filter((o, j) => cnt[j] > 0).map(o => o[1]));
         const rotated = orients.length > 1 ? n - k : 0;
         const total = h[0] + h[1];
         if (!best || score < best.score - 1e-9 ||
@@ -1562,28 +1678,24 @@ function packSheetInternal(sheetW, sheetH, pieces, kerf, sheetGrain, sheetSid) {
     return bands;
   };
 
-  // Empilage des bandes : les plus hautes d'abord ; à hauteur égale, les plus
-  // remplies d'abord pour placer un maximum de pièces. Les bandes qui ne tiennent
-  // pas restent disponibles pour un autre panneau.
   const pack = (bands) => {
     bands.sort((a, b) => b.h - a.h || b.w - a.w);
     const placed = [];
+    const rows = [];              // bandes réellement posées (pour les chutes)
     let y = 0;
     for (const b of bands) {
-      if (y + b.h > sheetH + 1e-9) continue;
+      if (y + b.h > rectH + 1e-9) continue;
       let x = 0;
       for (const p of b.pieces) {
         placed.push({ p, x, y, w: b.o[0], h: b.o[1], rotated: b.o[2] });
         x += b.o[0] + kerf;
       }
+      rows.push({ y, h: b.h, usedW: x - kerf });
       y += b.h + kerf;
     }
-    return { placed, usedH: y };
+    return { placed, usedH: y, rows };
   };
 
-  // Les quatre variantes sont essayées (orientation × répartition) ; on garde celle
-  // qui place le plus de pièces, puis celle qui laisse la plus grande chute. À
-  // égalité, la répartition équilibrée est privilégiée : des chutes plus rectangulaires.
   let best = null;
   for (const [strategy, balanced] of [["totalH", true], ["ph", true], ["totalH", false], ["ph", false]]) {
     const r = pack(buildBands(strategy, balanced));
@@ -1593,142 +1705,369 @@ function packSheetInternal(sheetW, sheetH, pieces, kerf, sheetGrain, sheetSid) {
   }
 
   const placedSet = new Set(best.placed.map(pl => pl.p));
-  return { placed: best.placed, unused: eligible.filter(p => !placedSet.has(p)) };
+  const wMax = best.placed.length ? Math.max(...best.placed.map(pl => pl.x + pl.w)) : 0;
+
+  // Zones libres réelles : le reste de chaque bande (entre la dernière pièce de
+  // la bande et la pièce la plus large). La colonne de droite et le bandeau du
+  // bas sont ajoutés par packRect.
+  const free = [];
+  for (const r of best.rows) {
+    const gw = wMax - r.usedW - kerf;
+    if (gw > 1e-9 && r.h > 1e-9) free.push({ x: r.usedW + kerf, y: r.y, w: gw, h: r.h });
+  }
+
+  // Bord bas réel du contenu : usedH inclut le kerf ajouté après la dernière bande
+  const yEnd = best.rows.length ? Math.max(0, best.usedH - kerf) : 0;
+
+  return {
+    placed: best.placed,
+    unused: pieces.filter(p => !placedSet.has(p)),
+    wMax,
+    yEnd,
+    free
+  };
 }
 
-// Chutes récupérables d'un panneau : chaque chute est un rectangle qui se détache
-// du panneau en une seule coupe — le bas du panneau (coupe horizontale), la colonne
-// de droite (coupe verticale sur toute la hauteur des bandes), ou le reste d'une
-// bande entre la fin des pièces et cette coupe verticale.
-// Le paramètre swap=true s'utilise quand le packing retenu a été fait dans le
-// référentiel pivoté (cutDir === "W", ou « Indifférent » avec l'orientation pivotée
-// retenue — voir le drapeau « swapped » de packSheet) : on transpose alors panneau
-// et pièces pour retomber sur des bandes horizontales, puis on retransforme les
-// chutes. Une chute ne doit jamais se superposer à une pièce placée : toute chute
-// qui chevaucherait une pièce (garde-fou) est écartée.
-function sheetChutes(sheetW, sheetH, used, kerf, swap) {
-  const W = swap ? sheetH : sheetW;
-  const H = swap ? sheetW : sheetH;
-  const usedT = swap
-    ? used.map(pl => ({ p: pl.p, x: pl.y, y: pl.x, w: pl.h, h: pl.w, rotated: pl.rotated }))
-    : used;
+// Placement dans un rectangle, avec reprise des deux zones libres (colonne de
+// droite et bandeau du bas) tant que la profondeur le permet. Chaque reprise est
+// elle-même guillotine, séparée par une seule coupe : le plan reste exécutable.
+function packRect(pieces, rectW, rectH, kerf, sheetGrain, depth) {
+  const res = bestBandLayout(pieces, rectW, rectH, kerf, sheetGrain);
+  if (!res.placed.length) {
+    return { placed: [], unused: res.unused, free: [{ x: 0, y: 0, w: rectW, h: rectH }] };
+  }
 
-  const bandMap = new Map();
-  for (const pl of usedT) {
-    const key = Math.round(pl.y * 1e6);
-    let b = bandMap.get(key);
-    if (!b) { b = { y: pl.y, h: pl.h, usedW: pl.x + pl.w }; bandMap.set(key, b); }
-    else if (pl.x + pl.w > b.usedW) b.usedW = pl.x + pl.w;
+  const free = res.free.slice();
+  const rightW = rectW - res.wMax - kerf;
+  const bottomH = rectH - res.yEnd - kerf;
+
+  if (depth > 0 && res.unused.length && rightW > 1e-6 && res.yEnd > 1e-6) {
+    const r = packRect(res.unused, rightW, res.yEnd, kerf, sheetGrain, depth - 1);
+    for (const pl of r.placed) { pl.x += res.wMax + kerf; res.placed.push(pl); }
+    for (const f of r.free) free.push({ x: f.x + res.wMax + kerf, y: f.y, w: f.w, h: f.h });
+    res.unused = r.unused;
+  } else if (rightW > 1e-6 && res.yEnd > 1e-6) {
+    free.push({ x: res.wMax + kerf, y: 0, w: rightW, h: res.yEnd });
   }
-  const bands = [...bandMap.values()];
-  if (!bands.length) return [];
-  const yEnd = Math.max(...bands.map(b => b.y + b.h));
-  const wMax = Math.max(...bands.map(b => b.usedW));
-  const chutes = [];
-  const rightW = W - wMax - kerf;
-  if (rightW > 1e-9) chutes.push({ x: wMax + kerf, y: 0, w: rightW, h: yEnd });
-  const bottomH = H - yEnd - kerf;
-  if (bottomH > 1e-9) chutes.push({ x: 0, y: yEnd + kerf, w: W, h: bottomH });
-  for (const b of bands) {
-    const gw = wMax - b.usedW - kerf;
-    if (gw > 1e-9) chutes.push({ x: b.usedW + kerf, y: b.y, w: gw, h: b.h });
+
+  if (depth > 0 && res.unused.length && bottomH > 1e-6) {
+    const r = packRect(res.unused, rectW, bottomH, kerf, sheetGrain, depth - 1);
+    for (const pl of r.placed) { pl.y += res.yEnd + kerf; res.placed.push(pl); }
+    for (const f of r.free) free.push({ x: f.x, y: f.y + res.yEnd + kerf, w: f.w, h: f.h });
+  } else if (bottomH > 1e-6) {
+    free.push({ x: 0, y: res.yEnd + kerf, w: rectW, h: bottomH });
   }
-  let out = chutes;
-  if (swap) out = out.map(ch => ({ x: ch.y, y: ch.x, w: ch.h, h: ch.w }));
-  // Garde-fou : dans tous les cas, une chute ne se superpose pas à une pièce
-  return out.filter(ch => !used.some(pl =>
-    ch.x < pl.x + pl.w - 1e-9 && pl.x < ch.x + ch.w - 1e-9 &&
-    ch.y < pl.y + pl.h - 1e-9 && pl.y < ch.y + ch.h - 1e-9));
+
+  return { placed: res.placed, unused: res.unused, free };
 }
 
-function optimize(stockList, partsList, kerf) {
+// Placement sur un panneau : gère le sens de la première coupe et les marges
+// de rabotage. Les pièces sont rendues dans le repère réel du panneau.
+function packOnSheet(sheet, pieces, kerf) {
+  const usableW = sheet.w - 2 * sheet.trim;
+  const usableH = sheet.h - 2 * sheet.trim;
+  if (usableW <= 0 || usableH <= 0) return { placed: [], unused: pieces, swapped: false, free: [] };
+
+  const eligible = pieces.filter(p => pieceFitsSheet(p, sheet));
+
+  const tryPack = (swap) => {
+    const w = swap ? usableH : usableW;
+    const h = swap ? usableW : usableH;
+    const grain = swap ? flipGrain(sheet.grain) : sheet.grain;
+    const r = packRect(eligible, w, h, kerf, grain, 1);
+    let placed = r.placed;
+    if (swap) {
+      placed = placed.map(pl => ({ p: pl.p, x: pl.y, y: pl.x, w: pl.h, h: pl.w, rotated: !pl.rotated }));
+    }
+    placed = placed.map(pl => ({ p: pl.p, x: pl.x + sheet.trim, y: pl.y + sheet.trim, w: pl.w, h: pl.h, rotated: pl.rotated }));
+    let free = r.free;
+    if (swap) free = free.map(f => ({ x: f.y, y: f.x, w: f.h, h: f.w }));
+    free = free.map(f => ({ x: f.x + sheet.trim, y: f.y + sheet.trim, w: f.w, h: f.h }));
+    return { placed, swapped: swap, free };
+  };
+
+  let out;
+  if (sheet.cutDir === "W") out = tryPack(true);
+  else if (sheet.cutDir === "L") out = tryPack(false);
+  else {
+    const direct = tryPack(false);
+    const swapped = tryPack(true);
+    if (swapped.placed.length > direct.placed.length) out = swapped;
+    else if (swapped.placed.length === direct.placed.length) {
+      // à nombre de pièces égal, on garde le plan qui monte le moins haut
+      const hOf = (r) => r.placed.reduce((m, pl) => Math.max(m, pl.y + pl.h), 0);
+      out = hOf(swapped) < hOf(direct) - 1e-9 ? swapped : direct;
+    } else out = direct;
+  }
+
+  const placedSet = new Set(out.placed.map(pl => pl.p));
+  return {
+    placed: out.placed,
+    unused: pieces.filter(p => !placedSet.has(p)),
+    swapped: out.swapped,
+    free: out.free
+  };
+}
+
+/* ---------- Chutes récupérables ---------- */
+
+// Les chutes sont exactement les zones libres produites par le placement : chaque
+// rectangle se détache du panneau par une seule coupe, dans la continuité des
+// bandes et de leur reprise. Aucune reconstruction géométrique, donc aucun risque
+// de chute qui recouvrirait une pièce.
+function sheetChutes(sheet) {
+  const t = sheet.trim || 0;
+  const out = [];
+  (sheet.free || []).forEach(f => {
+    // intersection avec la zone utile, par sécurité
+    const x1 = Math.max(f.x, t), y1 = Math.max(f.y, t);
+    const x2 = Math.min(f.x + f.w, sheet.w - t), y2 = Math.min(f.y + f.h, sheet.h - t);
+    const w = x2 - x1, h = y2 - y1;
+    if (w <= 1e-9 || h <= 1e-9) return;
+    out.push({ x: x1, y: y1, w, h });
+  });
+  return out;
+}
+
+/* ---------- Optimisation globale ---------- */
+
+function expandPieces(partsList) {
   const pieces = [];
   partsList.forEach((pt, idx) => {
     for (let q = 0; q < pt.qty; q++) {
-      pieces.push({ label: pt.label, w: pt.w, h: pt.h, rotatable: pt.rotatable, grain: pt.grain || "", stockSid: pt.stockSid || "", color: pt.color || "", ref: idx });
+      pieces.push({
+        label: pt.label, w: pt.w, h: pt.h,
+        rotatable: !!pt.rotatable, grain: pt.grain || "",
+        stockSid: pt.stockSid || "", color: pt.color || "", ref: idx,
+        th: pt.th === undefined ? null : pt.th,
+        mat: pt.mat || ""
+      });
     }
   });
-  // Tri : surface décroissante, puis plus grande dimension décroissante
-  pieces.sort((a, b) => (b.w * b.h - a.w * a.h) || (Math.max(b.w, b.h) - Math.max(a.w, a.h)));
+  return pieces;
+}
 
-  const sheets = [];
+function sheetArea(s) { return s.w * s.h; }
+function usableArea(s) { return Math.max(0, s.w - 2 * s.trim) * Math.max(0, s.h - 2 * s.trim); }
+
+function makeSheet(t, trim) {
+  return {
+    w: t.w, h: t.h, label: t.label, grain: t.grain, cutDir: t.cutDir, sid: t.sid,
+    th: t.th, mat: t.mat, trim: trim, used: [], swapped: false, free: []
+  };
+}
+
+// Regroupe le stock par type (dimensions, fil, coupe, matière, épaisseur) pour
+// ne pas réévaluer 30 fois le même panneau.
+function stockTypes(stockList) {
+  const map = new Map();
   for (const s of stockList) {
-    for (let q = 0; q < s.qty; q++) {
-      sheets.push({ w: s.w, h: s.h, label: s.label, grain: s.grain, cutDir: s.cutDir || "", sid: s.sid, used: [], swapped: false });
-    }
+    const key = [s.w, s.h, s.grain, s.cutDir, s.sid, s.th === null ? "" : s.th, s.mat].join("|");
+    let t = map.get(key);
+    if (!t) { t = Object.assign({}, s, { count: 0 }); map.set(key, t); }
+    t.count += s.qty;
   }
-  // Les grands panneaux d'abord pour accueillir les grandes pièces
-  sheets.sort((a, b) => b.w * b.h - a.w * a.h);
+  return [...map.values()];
+}
 
-  const remaining = [...pieces];
-  for (const sheet of sheets) {
-    if (!remaining.length) break;
-    const res = packSheet(sheet.w, sheet.h, remaining, kerf, sheet.grain, sheet.sid, sheet.cutDir);
-    sheet.used = res.placed;
-    // Orientation réellement retenue (utile pour les chutes quand cutDir est « Indifférent »)
-    sheet.swapped = !!res.swapped;
-    const placedSet = new Set(res.placed.map(pl => pl.p));
-    for (let i = remaining.length - 1; i >= 0; i--) {
-      if (placedSet.has(remaining[i])) remaining.splice(i, 1);
+function runPacking(stockList, pieces, kerf, objective, trim, order) {
+  const types = stockTypes(stockList);
+  const remaining = order.slice();
+  const sheets = [];
+
+  if (objective === "material") {
+    // À chaque étape : le panneau qui remplit le mieux sa surface. Consomme moins
+    // de matière quand plusieurs formats sont disponibles.
+    const pool = types.map(t => Object.assign({}, t));
+    while (remaining.length && pool.length) {
+      let bi = -1, bestScore = -Infinity, bestPieces = -1, bestRes = null;
+      for (let i = 0; i < pool.length; i++) {
+        if (pool[i].count <= 0) continue;
+        const res = packOnSheet(makeSheet(pool[i], trim), remaining, kerf);
+        if (!res.placed.length) continue;
+        const used = res.placed.reduce((x, pl) => x + pl.w * pl.h, 0);
+        const score = used / Math.max(1e-9, usableArea(makeSheet(pool[i], trim)));
+        if (score > bestScore + 1e-9 || (Math.abs(score - bestScore) < 1e-9 && res.placed.length > bestPieces)) {
+          bi = i; bestScore = score; bestPieces = res.placed.length; bestRes = res;
+        }
+      }
+      if (bi < 0) break;
+      const t = pool[bi];
+      t.count--;
+      if (t.count <= 0) pool.splice(bi, 1);
+      const sh = makeSheet(t, trim);
+      sh.used = bestRes.placed;
+      sh.swapped = !!bestRes.swapped;
+      sh.free = bestRes.free || [];
+      sheets.push(sh);
+      const ps = new Set(bestRes.placed.map(pl => pl.p));
+      for (let i = remaining.length - 1; i >= 0; i--) if (ps.has(remaining[i])) remaining.splice(i, 1);
+    }
+  } else {
+    // « panneaux » : les plus grands d'abord, ils absorbent le plus de pièces.
+    types.sort((a, b) => sheetArea(b) - sheetArea(a));
+    for (const t of types) {
+      for (let k = 0; k < t.count; k++) {
+        if (!remaining.length) break;
+        const sh = makeSheet(t, trim);
+        const res = packOnSheet(sh, remaining, kerf);
+        if (!res.placed.length) break; // inutile d'essayer les suivants identiques
+        sh.used = res.placed;
+        sh.swapped = !!res.swapped;
+        sh.free = res.free || [];
+        sheets.push(sh);
+        const ps = new Set(res.placed.map(pl => pl.p));
+        for (let i = remaining.length - 1; i >= 0; i--) if (ps.has(remaining[i])) remaining.splice(i, 1);
+      }
+      if (!remaining.length) break;
     }
   }
-  return { sheets: sheets.filter(s => s.used.length), remaining };
+
+  return { sheets, remaining };
+}
+
+function resultScore(r) {
+  return {
+    miss: r.remaining.length,
+    sheets: r.sheets.length,
+    area: r.sheets.reduce((t, s) => t + sheetArea(s), 0)
+  };
+}
+
+function isBetter(a, b, objective) {
+  if (!b) return true;
+  if (a.miss !== b.miss) return a.miss < b.miss;
+  if (objective === "material") {
+    if (Math.abs(a.area - b.area) > 1e-6) return a.area < b.area;
+    return a.sheets < b.sheets;
+  }
+  if (a.sheets !== b.sheets) return a.sheets < b.sheets;
+  return a.area < b.area - 1e-6;
+}
+
+function optimize(stockList, partsList, kerf, opts) {
+  const objective = (opts && opts.objective) === "material" ? "material" : "panels";
+  const trim = (opts && opts.trim) || 0;
+  const base = expandPieces(partsList);
+  if (!base.length || !stockList.length) return { sheets: [], remaining: base };
+
+  // Trois ordres de pièces essayés : le meilleur résultat est conservé.
+  const byArea = (a, b) => (b.w * b.h - a.w * a.h) || (Math.max(b.w, b.h) - Math.max(a.w, a.h));
+  const byMaxDim = (a, b) => (Math.max(b.w, b.h) - Math.max(a.w, a.h)) || (b.w * b.h - a.w * a.h);
+  const byLong = (a, b) => (b.w - a.w) || (b.h - a.h);
+  const orderings = [base.slice().sort(byArea), base.slice().sort(byMaxDim), base.slice().sort(byLong)];
+
+  let best = null, bestScore = null;
+  for (const ord of orderings) {
+    const r = runPacking(stockList, base, kerf, objective, trim, ord);
+    const sc = resultScore(r);
+    if (isBetter(sc, bestScore, objective)) { best = r; bestScore = sc; }
+  }
+  return best;
+}
+
+/* ============================ Lecture des saisies ============================ */
+
+function readInputs() {
+  const errors = [];
+  const skipped = [];
+  ensureSids();
+
+  const parts = [];
+  state.parts.forEach((p, i) => {
+    const hasContent = (p.label || "").trim() || str(p.w).trim() || str(p.h).trim() ||
+      str(p.qty).trim() || str(p.th).trim() || str(p.mat).trim();
+    if (!hasContent) return;                       // ligne vide : ignorée sans bruit
+    const w = parseDim(p.w), h = parseDim(p.h), qty = parseInt(p.qty, 10);
+    if (!(w > 0) || !(h > 0) || !(qty > 0)) {
+      skipped.push("Pièce " + (i + 1) + " (" + (p.label || "sans libellé") + ")");
+      return;                                      // ligne incomplète : ignorée, le reste est calculé
+    }
+    const stockSid = p.stockRef && state.stock.some(s => s.sid === p.stockRef) ? p.stockRef : "";
+    const grain = p.grain === "L" || p.grain === "W" ? p.grain : "";
+    parts.push({
+      label: (p.label || "P" + (i + 1)).trim(), w, h, qty,
+      rotatable: grain === "", grain, stockSid, color: p.color || "",
+      th: toThickness(p.th), mat: normMat(p.mat)
+    });
+  });
+
+  const stock = [];
+  state.stock.forEach((s, i) => {
+    const hasContent = (s.label || "").trim() || str(s.w).trim() || str(s.h).trim() ||
+      str(s.qty).trim() || str(s.th).trim() || str(s.mat).trim();
+    if (!hasContent) return;
+    const w = parseDim(s.w), h = parseDim(s.h), qty = parseInt(s.qty, 10);
+    if (!(w > 0) || !(h > 0) || !(qty > 0)) {
+      skipped.push("Panneau " + (i + 1) + " (" + (s.label || "sans libellé") + ")");
+      return;
+    }
+    stock.push({
+      label: (s.label || "Panneau " + w + "×" + h).trim(), w, h, qty,
+      grain: (s.grain === "L" || s.grain === "W" || s.grain === "") ? s.grain : "",
+      cutDir: (s.cutDir === "L" || s.cutDir === "W" || s.cutDir === "") ? s.cutDir : "",
+      sid: s.sid, th: toThickness(s.th), mat: normMat(s.mat)
+    });
+  });
+
+  const kerf = parseDim($("#set-kerf").value);
+  if (!(kerf >= 0)) errors.push("Largeur de coupe invalide.");
+  const trim = parseDim($("#set-trim").value || "0");
+  if (!(trim >= 0)) errors.push("Marge de rabotage invalide.");
+
+  return {
+    parts, stock, errors, skipped,
+    kerf: kerf > 0 ? kerf : 0,
+    trim: trim > 0 ? trim : 0,
+    objective: $("#set-objective").value === "material" ? "material" : "panels"
+  };
 }
 
 /* ============================ Calcul ============================ */
 
-function readInputs() {
-  const errors = [];
-  ensureSids();
-  const parts = [];
-  state.parts.forEach((p, i) => {
-    const w = parseDim(p.w), h = parseDim(p.h), qty = parseInt(p.qty, 10);
-    if (!(w > 0) || !(h > 0) || !(qty > 0)) {
-      errors.push("Pièce " + (i + 1) + " (" + (p.label || "sans libellé") + ") : dimensions ou quantité invalides.");
-      return;
-    }
-    const stockSid = p.stockRef && state.stock.some(s => s.sid === p.stockRef) ? p.stockRef : "";
-    const grain = p.grain === "L" || p.grain === "W" ? p.grain : "";
-    // fil « Indifférent » : la pièce peut être pivotée par l'optimiseur s'il y a la place
-    parts.push({ label: (p.label || "P" + (i + 1)).trim(), w, h, qty, rotatable: grain === "", grain, stockSid, color: p.color || "" });
-  });
-  const stock = [];
-  state.stock.forEach((s, i) => {
-    const w = parseDim(s.w), h = parseDim(s.h), qty = parseInt(s.qty, 10);
-    if (!(w > 0) || !(h > 0) || !(qty > 0)) {
-      errors.push("Panneau " + (i + 1) + " (" + (s.label || "sans libellé") + ") : dimensions ou quantité invalides.");
-      return;
-    }
-    stock.push({ label: (s.label || "Panneau " + w + "×" + h).trim(), w, h, qty, grain: (s.grain === "L" || s.grain === "W" || s.grain === "") ? s.grain : "L", cutDir: (s.cutDir === "L" || s.cutDir === "W" || s.cutDir === "") ? s.cutDir : "W", sid: s.sid });
-  });
-  const kerf = parseDim($("#set-kerf").value);
-  if (!(kerf >= 0)) errors.push("Largeur de coupe invalide.");
-  return { parts, stock, kerf: kerf > 0 ? kerf : 0, errors };
+function statCard(val, lbl) {
+  return '<div class="stat"><div class="val">' + val + '</div><div class="lbl">' + lbl + "</div></div>";
 }
 
 function calculate() {
-  const { parts, stock, kerf, errors } = readInputs();
+  const input = readInputs();
+  const { parts, stock, kerf, trim, errors, skipped, objective } = input;
   const container = $("#results");
-  if (errors.length) {
-    container.innerHTML = '<div class="warn-box error"><b>Erreurs :</b><br>' +
-      errors.map(esc).join("<br>") + "</div>";
+  const emptyMsg = '<div class="empty-msg">Ajoutez vos pièces et vos panneaux : le plan de coupe se recalcule automatiquement à chaque modification.</div>';
+
+  if (!parts.length || !stock.length) {
+    const why = errors.length
+      ? errors.map(esc).join("<br>")
+      : "Ajoutez au moins une pièce et un panneau.";
+    container.innerHTML = '<div class="warn-box error"><b>Rien à calculer :</b><br>' + why + "</div>" +
+      (lastPlanHtml || emptyMsg);
     lastResult = null;
+    lastPlanHtml = "";
     return;
   }
-  if (!parts.length || !stock.length) {
-    container.innerHTML = '<div class="warn-box error">Ajoutez au moins une pièce et un panneau.</div>';
-    lastResult = null;
+  if (errors.length) {
+    // Saisie invalide : on garde le dernier plan valide affiché au lieu de
+    // tout effacer à la première faute de frappe.
+    container.innerHTML = '<div class="warn-box error"><b>Erreurs :</b><br>' +
+      errors.map(esc).join("<br>") + "</div>" + lastPlanHtml;
     return;
   }
 
-  const res = optimize(stock, parts, kerf);
+  const res = optimize(stock, parts, kerf, { objective, trim });
 
   // Grouper les panneaux au layout identique
   const groups = [];
   for (const s of res.sheets) {
     const sig = s.used.map(pl => [pl.p.label, +pl.x.toFixed(6), +pl.y.toFixed(6), +pl.w.toFixed(6), +pl.h.toFixed(6), pl.rotated].join("|")).sort().join(";");
-    let g = groups.find(g => g.sig === sig && g.w === s.w && g.h === s.h && g.label === s.label && g.grain === s.grain && g.cutDir === s.cutDir);
-    if (!g) { g = { sig, w: s.w, h: s.h, label: s.label, grain: s.grain, cutDir: s.cutDir, swapped: s.swapped, count: 0, used: s.used }; groups.push(g); }
+    let g = groups.find(g => g.sig === sig && g.w === s.w && g.h === s.h && g.label === s.label &&
+      g.grain === s.grain && g.cutDir === s.cutDir && g.trim === s.trim && g.swapped === s.swapped);
+    if (!g) {
+      g = {
+        sig, w: s.w, h: s.h, label: s.label, grain: s.grain, cutDir: s.cutDir,
+        trim: s.trim, swapped: s.swapped, count: 0, used: s.used, free: s.free || []
+      };
+      groups.push(g);
+    }
     g.count++;
   }
 
@@ -1737,26 +2076,47 @@ function calculate() {
   const totalParts = parts.reduce((t, p) => t + p.qty, 0);
   const placedCount = totalParts - res.remaining.length;
 
-  lastResult = { groups, sheets: res.sheets, remaining: res.remaining, stock, kerf };
+  lastResult = { groups, sheets: res.sheets, remaining: res.remaining, stock, kerf, trim, objective, parts };
 
   let html = "";
 
   // Avertissements
+  if (skipped.length) {
+    html += '<div class="warn-box"><b>Ligne(s) incomplète(s) ignorée(s)</b> — ' +
+      skipped.map(esc).join(", ") + ". Complétez les dimensions pour les inclure.</div>";
+  }
   if (res.remaining.length) {
     const byLabel = {};
     res.remaining.forEach(p => { byLabel[p.label] = (byLabel[p.label] || 0) + 1; });
     const list = Object.keys(byLabel).map(k => esc(k) + " × " + byLabel[k]).join(", ");
-    html += '<div class="warn-box"><b>' + res.remaining.length + ' pièce(s) non placée(s)</b> — stock insuffisant : ' +
-      list + ". Ajoutez des panneaux ou réduisez les quantités.</div>";
+    // Distingue « pas assez de panneaux » de « aucune matière compatible »
+    const orphans = {};
+    res.remaining.forEach(p => {
+      const ok = stock.some(s => pieceFitsSheet(p, { sid: s.sid, th: s.th, mat: s.mat }));
+      if (!ok) orphans[p.label] = (orphans[p.label] || 0) + 1;
+    });
+    const orphanList = Object.keys(orphans);
+    html += '<div class="warn-box"><b>' + res.remaining.length + " pièce(s) non placée(s)</b> — " +
+      (orphanList.length
+        ? "aucun panneau de même matière/épaisseur pour : " + orphanList.map(esc).join(", ") + ". "
+        : "") +
+      "Stock insuffisant pour : " + list + ". Ajoutez des panneaux ou réduisez les quantités.</div>";
   }
 
   // Statistiques
   const util = totalSheetArea ? (100 * totalUsedArea / totalSheetArea) : 0;
+  const dec = Math.max(0, parseInt($("#set-dec").value || "0", 10));
   html += '<div class="stats">' +
-    '<div class="stat"><div class="val">' + res.sheets.length + '</div><div class="lbl">Panneaux utilisés</div></div>' +
-    '<div class="stat"><div class="val">' + placedCount + " / " + totalParts + '</div><div class="lbl">Pièces placées</div></div>' +
-    '<div class="stat"><div class="val">' + util.toFixed(1).replace(".", ",") + ' %</div><div class="lbl">Taux d\'utilisation</div></div>' +
+    statCard(res.sheets.length, "Panneaux utilisés") +
+    statCard(placedCount + " / " + totalParts, "Pièces placées") +
+    statCard(util.toFixed(1).replace(".", ",") + " %", "Taux d'utilisation") +
+    statCard(fmtBig(totalSheetArea - totalUsedArea, dec) + unitAreaSuffix(), "Chute totale") +
     "</div>";
+
+  // Barre d'actions du plan
+  html += '<div class="plan-tools no-print">' +
+    '<button id="btn-reuse-offcuts" title="Ajoute au stock les chutes récupérables de ce plan (côté ≥ 100 mm)">' +
+    "↻ Réutiliser les chutes comme stock</button></div>";
 
   // Panneaux
   groups.forEach((g, gi) => {
@@ -1768,7 +2128,9 @@ function calculate() {
       '<span class="title">Panneau ' + (gi + 1) + (g.count > 1 ? ' <span style="color:var(--accent)">(× ' + g.count + ' identiques)</span>' : "") + "</span>" +
       '<span class="meta">' + esc(g.label) + " — " + fmtPair(g.w, g.h) + unitSuffix() +
       " — Fil : " + (g.grain === "W" ? "largeur" : g.grain === "L" ? "longueur" : "indifférent") +
-      " — Coupe : " + (g.cutDir === "L" ? "longueur d'abord" : g.cutDir === "W" ? "largeur d'abord" : "indifférent") + "</span>" +
+      " — Coupe : " + (g.cutDir === "L" ? "longueur d'abord" : g.cutDir === "W" ? "largeur d'abord" : "indifférent") +
+      (g.trim > 0 ? " — Rabotage : " + fmtDim(g.trim, 1) + unitSuffix() : "") +
+      "</span>" +
       '<span class="util ' + cls + '">' + u.toFixed(1).replace(".", ",") + " %</span>" +
       "</div>" +
       svgDiagram(g) +
@@ -1777,22 +2139,21 @@ function calculate() {
   });
 
   container.innerHTML = html;
+  lastPlanHtml = html;
   bindDiagramTooltips();
+  const reuse = $("#btn-reuse-offcuts");
+  if (reuse) reuse.addEventListener("click", reuseOffcuts);
 }
 
 /* ============================ Diagramme SVG ============================ */
 
 /* ---------- Fil du bois : traits imitant le sens du fil ---------- */
 
-// Sens du fil d'une pièce posée : true = lignes horizontales (selon la largeur du panneau),
-// null = aucun trait affiché (panneau « Indifférent »)
 function grainHorizontal(pl, sheetGrain) {
   if (pl.p.grain) {
-    // Fil imposé sur la pièce : suit son propre fil (aligné sur celui du panneau par le calcul)
     const alongLength = pl.p.grain === "L";
     return alongLength ? !pl.rotated : !!pl.rotated;
   }
-  // Pièce « Indifférent » : par défaut, le fil du panneau s'affiche
   return sheetGrain ? sheetGrain === "L" : null;
 }
 
@@ -1802,13 +2163,11 @@ function grainHash(a, b, c) {
   return s - Math.floor(s);
 }
 
-// Traits ondulés « fil du bois » ; extrémités affinées pour rester dans la pièce,
-// chaque trait est découpé en sous-traits avec des ruptures pseudo-aléatoires
 function grainLinePoints(x, y, w, h, horizontal, seed) {
   const along = horizontal ? w : h;
   const across = horizontal ? h : w;
   if (along < 14 || across < 8) return null; // pièces vraiment trop petites
-  const n = Math.min(7, Math.max(1, Math.floor(across / 16))); // au moins un trait
+  const n = Math.min(7, Math.max(1, Math.floor(across / 16)));
   const gap = across / (n + 1);
   const amp = Math.min(2.2, gap * 0.18);
   const lines = [];
@@ -1826,7 +2185,6 @@ function grainLinePoints(x, y, w, h, horizontal, seed) {
         px: horizontal ? x + t * along : x + c + off,
         py: horizontal ? y + c + off : y + t * along
       };
-      // rupture du trait (jamais aux extrémités, jamais deux fois de suite après un point isolé)
       const hole = j > 0 && j < steps && cur.length >= 2 && holeChain < 2 && grainHash(seed, k, j) < 0.15;
       if (hole) {
         sub.push(cur);
@@ -1872,11 +2230,6 @@ function drawGrainLines(ctx, x, y, w, h, horizontal, seed) {
 
 /* ---------- Étiquettes des pièces ---------- */
 
-// Choix de l'étiquette d'une pièce selon la place disponible (dimensions à l'écran) :
-// nom + dimensions si possible, nom seul sur les petites pièces, police réduite au
-// besoin (minimum 6 px, nom tronqué si vraiment trop long), et texte vertical sur
-// les pièces trop étroites pour un texte horizontal lisible. Renvoie null si rien
-// ne tient.
 function partLabelLayout(w, h, label, dims, maxFs) {
   label = (label || "").trim();
   if (!label || w < 10 || h < 10) return null;
@@ -1892,7 +2245,6 @@ function partLabelLayout(w, h, label, dims, maxFs) {
   const vertical = fsV > fsH + 1e-9; // vertical seulement si la pièce est trop étroite
   const along = vertical ? h : w, across = vertical ? w : h;
   let fs = Math.max(fsH, fsV);
-  // très petit format : typographie réduite d'office
   if (w < 25 && h < 25) fs *= 0.8;
   if (fs < 4) {
     fs = 4; // police minimale, nom tronqué s'il dépasse
@@ -1902,7 +2254,6 @@ function partLabelLayout(w, h, label, dims, maxFs) {
   return { vertical, lines, fs };
 }
 
-// Tracé d'une étiquette en SVG : centrée sur (cx, cy), verticale si besoin
 function labelSVG(cx, cy, lbl, fill, weight) {
   const lh = lbl.fs * 1.15;
   let s = "";
@@ -1911,13 +2262,12 @@ function labelSVG(cx, cy, lbl, fill, weight) {
     s += '<text x="' + cx.toFixed(1) + '" y="' + (ty + lbl.fs * 0.35).toFixed(1) + '" font-size="' + lbl.fs.toFixed(1) +
       '" text-anchor="middle" fill="' + fill + '"' + (weight ? ' font-weight="' + weight + '"' : "") +
       ' style="pointer-events:none"' +
-      (lbl.vertical ? ' transform="rotate(-90 ' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ')"' : "") +
+      (lbl.vertical ? ' transform="rotate(-90 ' + cx.toFixed(1) + " " + cy.toFixed(1) + ')"' : "") +
       ">" + esc(ln) + "</text>";
   });
   return s;
 }
 
-// Tracé d'une étiquette sur le canvas d'export : centrée, verticale si besoin
 function labelCanvas(ctx, cx, cy, lbl, fill, firstBold) {
   ctx.save();
   ctx.translate(cx, cy);
@@ -1941,9 +2291,17 @@ function svgDiagram(g) {
   const W = g.w * scale + 2 * pad;
   const H = g.h * scale + 2 * pad;
   const dec = Math.max(0, parseInt($("#set-dec").value || "0", 10));
+  const trim = g.trim || 0;
 
-  let s = '<svg class="diagram" viewBox="0 0 ' + W + " " + H + '" xmlns="http://www.w3.org/2000/svg">';
+  let s = '<svg class="diagram" viewBox="0 0 ' + W + " " + H + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' +
+    esc("Plan de coupe — " + g.label + " " + fmtPair(g.w, g.h) + unitSuffix()) + '">';
   s += '<rect x="' + pad + '" y="' + pad + '" width="' + g.w * scale + '" height="' + g.h * scale + '" fill="#f6f8fb" stroke="#8a97ab" stroke-width="2"/>';
+  // zone utile (après rabotage)
+  if (trim > 0) {
+    s += '<rect x="' + (pad + trim * scale).toFixed(2) + '" y="' + (pad + trim * scale).toFixed(2) +
+      '" width="' + ((g.w - 2 * trim) * scale).toFixed(2) + '" height="' + ((g.h - 2 * trim) * scale).toFixed(2) +
+      '" fill="none" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 4"/>';
+  }
 
   g.used.forEach((pl, gi) => {
     const x = pad + pl.x * scale, y = pad + pl.y * scale;
@@ -1952,17 +2310,16 @@ function svgDiagram(g) {
     const tipParts = [pl.p.label, fmtPair(pl.w, pl.h) + unitSuffix()];
     if (pl.rotated) tipParts.push("pivotée");
     if (pl.p.grain) tipParts.push("fil : " + (pl.p.grain === "L" ? "longueur" : "largeur"));
-    s += '<rect class="part" x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" width="' + w.toFixed(2) + '" height="' + h.toFixed(2) + '" fill="' + color + '" fill-opacity="0.85" stroke="' + color + '" stroke-width="1.2" data-tip="' + esc(tipParts.join("|")) + '"/>';
+    s += '<rect class="part" x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" width="' + w.toFixed(2) + '" height="' + h.toFixed(2) +
+      '" fill="' + color + '" fill-opacity="0.85" stroke="' + color + '" stroke-width="1.2" data-tip="' + esc(tipParts.join("|")) + '"/>';
     const gh = grainHorizontal(pl, g.grain);
     if (gh !== null) s += grainLinesSVG(x, y, w, h, gh, gi);
-    // Étiquette : affichée même sur les petits formats, police réduite au besoin,
-    // verticale sur les pièces étroites
     const lbl = partLabelLayout(w, h, pl.p.label, fmtPair(pl.w, pl.h));
     if (lbl) s += labelSVG(x + w / 2, y + h / 2, lbl, labelColorFor(color), "600");
   });
 
   // Chutes récupérables : rectangles en pointillés, détachables en une seule coupe
-  sheetChutes(g.w, g.h, g.used, lastResult ? lastResult.kerf : 0, !!g.swapped).forEach(ch => {
+  sheetChutes(g).forEach(ch => {
     if (ch.w < g.w * 0.02 || ch.h < g.h * 0.02) return; // trop petites pour être utiles
     const cx = pad + ch.x * scale, cy = pad + ch.y * scale;
     const cw = ch.w * scale, chh = ch.h * scale;
@@ -1980,10 +2337,20 @@ function svgDiagram(g) {
   return s;
 }
 
+// Légende : une entrée par couleur réellement utilisée, pour que deux pièces de
+// même libellé mais de couleurs différentes restent distinguables.
 function legendFor(g) {
-  const labels = [...new Set(g.used.map(pl => pl.p.label))];
-  return '<div class="legend no-print">' + labels.map(l =>
-    '<span><i style="background:' + colorFor(l) + '"></i>' + esc(l) + "</span>").join("") + "</div>";
+  const seen = new Set();
+  const items = [];
+  g.used.forEach(pl => {
+    const color = colorFor(pl.p);
+    const key = color + "|" + pl.p.label;
+    if (seen.has(key)) return;
+    seen.add(key);
+    items.push({ label: pl.p.label, color: color });
+  });
+  return '<div class="legend no-print">' + items.map(it =>
+    '<span><i style="background:' + it.color + '"></i>' + esc(it.label) + "</span>").join("") + "</div>";
 }
 
 function bindDiagramTooltips() {
@@ -1999,6 +2366,62 @@ function bindDiagramTooltips() {
   });
 }
 
+/* ============================ Réutilisation des chutes ============================ */
+
+// Côté minimal (exprimé dans l'unité courante) pour qu'une chute serve de stock.
+// Référence : 100 mm, converti selon l'unité choisie.
+const OFFCUT_MM = 100;
+const UNIT_MM = { mm: 1, cm: 10, m: 1000, in: 25.4 };
+
+function minOffcut() {
+  const f = UNIT_MM[$("#set-unit").value] || 1;
+  return OFFCUT_MM / f;
+}
+
+function collectOffcuts() {
+  if (!lastResult) return [];
+  const minSide = minOffcut();
+  const map = new Map();
+  lastResult.groups.forEach(g => {
+    sheetChutes(g).forEach(ch => {
+      if (ch.w < minSide || ch.h < minSide) return;
+      const key = Math.round(ch.w) + "x" + Math.round(ch.h) + "|" + g.grain;
+      const cur = map.get(key);
+      if (cur) cur.qty += g.count;
+      else map.set(key, { w: Math.round(ch.w), h: Math.round(ch.h), grain: g.grain, qty: g.count });
+    });
+  });
+  return [...map.values()];
+}
+
+function reuseOffcuts() {
+  const offcuts = collectOffcuts();
+  if (!offcuts.length) {
+    notify("Aucune chute réutilisable",
+      "<p>Aucune chute d'au moins " + fmtDim(minOffcut(), 0) + " × " + fmtDim(minOffcut(), 0) + unitSuffix() + " dans ce plan.</p>");
+    return;
+  }
+  const withTh = lastResult.stock.length ? lastResult.stock[0].th : null;
+  const withMat = lastResult.stock.length ? lastResult.stock[0].mat : "";
+  offcuts.forEach(o => {
+    state.stock.push({
+      label: "Chute " + o.w + "×" + o.h,
+      w: String(o.w), h: String(o.h), qty: String(o.qty),
+      grain: o.grain || "", cutDir: "",
+      th: withTh === null || withTh === undefined ? "" : String(withTh),
+      mat: withMat || "", sid: newSid()
+    });
+  });
+  applyAutoDefaults();
+  renderStock();
+  renderParts();
+  calculate();
+  saveWork();
+  notify("Chutes ajoutées au stock",
+    "<p><b>" + offcuts.length + "</b> dimension(s) ajoutée(s) — " +
+    offcuts.reduce((t, o) => t + o.qty, 0) + " panneau(x) de récupération. Relancez le calcul pour les utiliser.</p>");
+}
+
 /* ============================ Exports ============================ */
 
 function download(filename, blob) {
@@ -2007,39 +2430,62 @@ function download(filename, blob) {
   a.download = filename;
   document.body.appendChild(a);
   a.click();
-  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+// Champ CSV : guillemets, guillemets internes doublés, et neutralisation des
+// formules (Excel exécute les cellules commençant par = + - @).
+function csvCell(v) {
+  let s = str(v);
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return '"' + s.replace(/"/g, '""') + '"';
 }
 
 function exportCSV() {
-  if (!lastResult) { alert("Lancez d'abord un calcul."); return; }
+  if (!lastResult) { notify("Rien à exporter", "<p>Lancez d'abord un calcul.</p>"); return; }
   const dec = Math.max(0, parseInt($("#set-dec").value || "0", 10));
+  const minSide = minOffcut();
   const sep = ";";
-  let rows = [["Panneau", "Libellé", "Position X", "Position Y", "Longueur", "Largeur", "Pivotée", "Fil pièce"].join(sep)];
-  lastResult.sheets.forEach((s, i) => {
+  const head = ["Panneau", "Libellé", "Matière", "Épaisseur", "Position X", "Position Y", "Longueur", "Largeur", "Pivotée", "Fil pièce"];
+  const rows = [head.map(csvCell).join(sep)];
+  let n = 0;
+  lastResult.sheets.forEach((s) => {
+    n++;
     s.used.forEach(pl => {
       rows.push([
-        "P" + (i + 1), pl.p.label,
+        "P" + n, pl.p.label,
+        pl.p.mat || "", (pl.p.th === null || pl.p.th === undefined) ? "" : pl.p.th,
         fmtDim(pl.x, dec), fmtDim(pl.y, dec),
         fmtDim(pl.w, dec), fmtDim(pl.h, dec),
         pl.rotated ? "oui" : "non",
         pl.p.grain ? grainLabel(pl.p.grain) : ""
-      ].join(sep));
+      ].map(csvCell).join(sep));
+    });
+  });
+  // Chutes récupérables, pour le suivi du stock de récupération
+  lastResult.groups.forEach((g, gi) => {
+    sheetChutes(g).forEach(ch => {
+      if (ch.w < minSide || ch.h < minSide) return;
+      rows.push([
+        "P" + (gi + 1), "CHUTE", "", "",
+        fmtDim(ch.x, dec), fmtDim(ch.y, dec), fmtDim(ch.w, dec), fmtDim(ch.h, dec), "", ""
+      ].map(csvCell).join(sep));
     });
   });
   download("decoupe.csv", new Blob(["\uFEFF" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" }));
 }
 
 function sanitizeFilename(s) {
-  return (s || "").trim().replace(/[\\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").slice(0, 60) || "panneau";
+  return (s || "").trim().replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").slice(0, 60) || "panneau";
 }
 
 function exportImage() {
-  if (!lastResult) { alert("Lancez d'abord un calcul."); return; }
+  if (!lastResult) { notify("Rien à exporter", "<p>Lancez d'abord un calcul.</p>"); return; }
   const groups = lastResult.groups;
   const pad = 40;    // marge autour du panneau
   const titleH = 26; // bande de titre
   groups.forEach((g, gi) => {
-    const scale = Math.min(1, 4000 / Math.max(g.w, g.h)); // 1 unité = 1 px, plafonné
+    const scale = Math.min(1, 4000 / Math.max(g.w, g.h));
     const canvas = document.createElement("canvas");
     canvas.width = Math.ceil(g.w * scale) + 2 * pad;
     canvas.height = Math.ceil(g.h * scale) + 2 * pad + titleH;
@@ -2053,11 +2499,19 @@ function exportImage() {
     ctx.fillText(title, pad, pad + 14);
 
     const py = pad + titleH;
+    const trim = g.trim || 0;
     ctx.fillStyle = "#f6f8fb";
     ctx.strokeStyle = "#8a97ab";
     ctx.fillRect(pad, py, g.w * scale, g.h * scale);
     ctx.strokeRect(pad, py, g.w * scale, g.h * scale);
-    g.used.forEach((pl, gi) => {
+    if (trim > 0) {
+      ctx.save();
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.setLineDash([4, 4]);
+      ctx.strokeRect(pad + trim * scale, py + trim * scale, (g.w - 2 * trim) * scale, (g.h - 2 * trim) * scale);
+      ctx.restore();
+    }
+    g.used.forEach((pl, gj) => {
       const col = colorFor(pl.p);
       ctx.fillStyle = col;
       ctx.globalAlpha = 0.85;
@@ -2066,9 +2520,7 @@ function exportImage() {
       ctx.strokeStyle = col;
       ctx.strokeRect(pad + pl.x * scale, py + pl.y * scale, pl.w * scale, pl.h * scale);
       const gh = grainHorizontal(pl, g.grain);
-      if (gh !== null) drawGrainLines(ctx, pad + pl.x * scale, py + pl.y * scale, pl.w * scale, pl.h * scale, gh, gi);
-      // Étiquette : affichée même sur les petits formats, police réduite au besoin,
-      // verticale sur les pièces étroites
+      if (gh !== null) drawGrainLines(ctx, pad + pl.x * scale, py + pl.y * scale, pl.w * scale, pl.h * scale, gh, gj);
       const lbl = partLabelLayout(pl.w * scale, pl.h * scale, pl.p.label, fmtPair(pl.w, pl.h));
       if (lbl) labelCanvas(ctx, pad + (pl.x + pl.w / 2) * scale, py + (pl.y + pl.h / 2) * scale, lbl, labelColorFor(col), true);
     });
@@ -2076,7 +2528,7 @@ function exportImage() {
     // Chutes récupérables : rectangles en pointillés
     ctx.setLineDash([6, 4]);
     ctx.strokeStyle = "#98a4b8";
-    sheetChutes(g.w, g.h, g.used, lastResult.kerf, !!g.swapped).forEach(ch => {
+    sheetChutes(g).forEach(ch => {
       if (ch.w < g.w * 0.02 || ch.h < g.h * 0.02) return;
       const cx = pad + ch.x * scale, cyp = py + ch.y * scale;
       ctx.strokeRect(cx, cyp, ch.w * scale, ch.h * scale);
@@ -2092,65 +2544,186 @@ function exportImage() {
   });
 }
 
+/* ============================ Boîtes de dialogue ============================ */
+
+let dialogResolve = null;
+
+function dialogOpen(opts) {
+  return new Promise((resolve) => {
+    const back = $("#dialog-back");
+    $("#dialog-title").textContent = opts.title || "";
+    $("#dialog-body").innerHTML = opts.body || "";
+    const wrap = $("#dialog-input-wrap");
+    const input = $("#dialog-input");
+    if (opts.input) {
+      wrap.style.display = "";
+      input.value = opts.value || "";
+      input.placeholder = opts.placeholder || "";
+      input.setAttribute("aria-label", opts.inputLabel || opts.title || "Saisie");
+    } else {
+      wrap.style.display = "none";
+    }
+    const ok = $("#dialog-ok"), cancel = $("#dialog-cancel");
+    ok.textContent = opts.okText || "Valider";
+    cancel.textContent = opts.cancelText || "Annuler";
+    cancel.style.display = opts.hideCancel ? "none" : "";
+    back.classList.add("open");
+    dialogResolve = (val) => {
+      back.classList.remove("open");
+      dialogResolve = null;
+      resolve(val);
+    };
+    setTimeout(() => {
+      if (opts.input) { input.focus(); input.select(); }
+      else ok.focus();
+    }, 30);
+  });
+}
+
+function dialogClose(value) {
+  if (dialogResolve) dialogResolve(value);
+}
+
+function dialogInputVisible() {
+  return $("#dialog-input-wrap").style.display !== "none";
+}
+
+function askConfirm(title, body, okText) {
+  return dialogOpen({ title, body, okText: okText || "Confirmer" }).then(v => v === true);
+}
+
+function askText(title, value, inputLabel) {
+  return dialogOpen({ title, value, input: true, inputLabel, okText: "Enregistrer" })
+    .then(v => (typeof v === "string" && v.trim() ? v.trim() : null));
+}
+
+function notify(title, body) {
+  return dialogOpen({ title, body, hideCancel: true, okText: "OK" }).then(() => undefined);
+}
+
 /* ============================ Sauvegarde / chargement ============================ */
 
-const LS_KEY = "optimiseur-decoupe-projets";
-
 function lsProjects() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch (e) { return {}; }
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.projects) || "{}"); } catch (e) { return {}; }
+}
+
+function writeProjects(projects) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.projects, JSON.stringify(projects));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+const SETTING_FIELDS = {
+  unit: "#set-unit", kerf: "#set-kerf", dec: "#set-dec",
+  order: "#set-order", objective: "#set-objective", trim: "#set-trim"
+};
+
+function readSettings() {
+  const o = {};
+  for (const k in SETTING_FIELDS) o[k] = $(SETTING_FIELDS[k]).value;
+  return o;
+}
+
+function writeSettings(s) {
+  if (!s || typeof s !== "object") return;
+  for (const k in SETTING_FIELDS) {
+    if (s[k] === undefined) continue;
+    const el = $(SETTING_FIELDS[k]);
+    const v = String(s[k]);
+    if (el.tagName === "SELECT") {
+      if ([...el.options].some(o => o.value === v)) el.value = v;
+    } else {
+      el.value = v;
+    }
+  }
+}
+
+// Sauvegarde automatique de l'état courant : un rafraîchissement ne perd plus
+// le travail en cours.
+function saveWork() {
+  try {
+    localStorage.setItem(STORAGE_KEYS.work, JSON.stringify({ v: 1, state, settings: readSettings() }));
+  } catch (e) { /* quota plein : on n'interrompt pas la saisie */ }
+}
+
+function restoreWork() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.work);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    const st = sanitizeState(data && data.state);
+    if (!st) return false;
+    state = st;
+    writeSettings(data.settings);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 function saveProject() {
-  const name = prompt("Nom du projet :", "Mon projet");
-  if (!name) return;
-  const projects = lsProjects();
-  projects[name] = {
-    date: new Date().toISOString(),
-    state: JSON.parse(JSON.stringify(state)),
-    settings: {
-      unit: $("#set-unit").value,
-      kerf: $("#set-kerf").value,
-      dec: $("#set-dec").value,
-      order: $("#set-order").value
+  return askText("Enregistrer le projet", "Mon projet", "Nom du projet").then(name => {
+    if (!name) return;
+    const projects = lsProjects();
+    projects[name] = {
+      date: new Date().toISOString(),
+      state: JSON.parse(JSON.stringify(state)),
+      settings: readSettings()
+    };
+    if (!writeProjects(projects)) {
+      return notify("Enregistrement impossible",
+        "<p>Le stockage local du navigateur est plein. Exportez une sauvegarde puis supprimez d'anciens projets.</p>");
     }
-  };
-  localStorage.setItem(LS_KEY, JSON.stringify(projects));
-  alert('Projet "' + name + '" sauvegardé.');
+    notify("Projet enregistré", "<p>Projet « " + esc(name) + " » enregistré.</p>");
+  });
 }
 
 function exportBackup() {
   const projects = lsProjects();
-  if (!Object.keys(projects).length) { alert("Aucun projet sauvegardé à exporter."); return; }
-  const payload = { app: "IMBRIK", version: 1, exported: new Date().toISOString(), projects };
+  if (!Object.keys(projects).length) { notify("Aucun projet", "<p>Aucun projet nommé à exporter.</p>"); return; }
+  const payload = { app: "IMBRIK", version: 2, exported: new Date().toISOString(), projects };
   download("imbrik-sauvegarde.json", new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
-}
-
-function validProjectEntry(pr) {
-  return pr && typeof pr === "object" && pr.state && Array.isArray(pr.state.parts) && Array.isArray(pr.state.stock);
 }
 
 function importBackupFile(file) {
   const reader = new FileReader();
   reader.onload = () => {
     let data;
-    try { data = JSON.parse(reader.result); } catch (e) { alert("Fichier illisible : ce n'est pas un JSON valide."); return; }
+    try { data = JSON.parse(reader.result); } catch (e) {
+      notify("Fichier illisible", "<p>Ce n'est pas un fichier JSON valide.</p>");
+      return;
+    }
     const imported = (data && typeof data === "object" && data.projects && typeof data.projects === "object")
       ? data.projects
       : (data && typeof data === "object" && !Array.isArray(data) ? data : null);
-    if (!imported) { alert("Structure non reconnue : fichier de sauvegarde IMBRIK attendu."); return; }
-    const names = Object.keys(imported).filter(n => validProjectEntry(imported[n]));
-    if (!names.length) { alert("Aucun projet valide trouvé dans le fichier."); return; }
-    const pr = lsProjects();
-    names.forEach(n => { pr[n] = imported[n]; });
-    try {
-      localStorage.setItem(LS_KEY, JSON.stringify(pr));
-    } catch (e) {
-      alert("Import impossible : stockage local plein.");
+    if (!imported) {
+      notify("Structure non reconnue", "<p>Fichier de sauvegarde IMBRIK attendu.</p>");
       return;
     }
-    alert(names.length + " projet(s) importé(s) :\n" + names.join(", "));
+    const names = Object.keys(imported).filter(n => validProjectEntry(imported[n]));
+    if (!names.length) {
+      notify("Aucun projet valide", "<p>Le fichier ne contient aucun projet exploitable.</p>");
+      return;
+    }
+    const pr = lsProjects();
+    names.forEach(n => {
+      pr[n] = {
+        date: imported[n].date || new Date().toISOString(),
+        state: sanitizeState(imported[n].state),
+        settings: imported[n].settings || {}
+      };
+    });
+    if (!writeProjects(pr)) {
+      notify("Import impossible", "<p>Le stockage local est plein. Exportez puis supprimez d'anciens projets.</p>");
+      return;
+    }
     loadProjectModal();
+    notify("Import terminé", "<p>" + names.length + " projet(s) importé(s) : " + esc(names.join(", ")) + ".</p>");
   };
+  reader.onerror = () => notify("Lecture impossible", "<p>Le fichier n'a pas pu être lu.</p>");
   reader.readAsText(file);
 }
 
@@ -2201,87 +2774,116 @@ function loadProjectModal() {
     openModal("Charger un projet", "<p>Aucun projet sauvegardé.</p>");
     return;
   }
-  const html = names.map(n =>
-    '<div class="list-item"><span class="name" data-load="' + esc(n) + '">' + esc(n) +
-    ' <small style="color:var(--muted)">(' + new Date(projects[n].date).toLocaleDateString("fr-FR") + ")</small></span>" +
-    '<button class="icon" data-delproj="' + esc(n) + '">×</button></div>').join("");
+  const html = names.map(n => {
+    const d = new Date(projects[n].date);
+    const when = isNaN(d.getTime()) ? "" : d.toLocaleDateString("fr-FR");
+    return '<div class="list-item"><span class="name" data-load="' + esc(n) + '">' + esc(n) +
+      ' <small style="color:var(--muted)">(' + when + ")</small></span>" +
+      '<button class="icon" data-delproj="' + esc(n) + '" aria-label="Supprimer le projet ' + esc(n) + '">×</button></div>';
+  }).join("");
   openModal("Charger un projet", html);
 }
 
+function loadProject(name) {
+  const pr = lsProjects()[name];
+  const st = pr ? sanitizeState(pr.state) : null;
+  if (!st) {
+    notify("Projet illisible", "<p>Ce projet est incomplet ou corrompu.</p>");
+    return;
+  }
+  state = st;
+  state.parts.forEach(p => { if (p.grain) p.grainSet = true; });
+  writeSettings(pr.settings || {});
+  applyAutoDefaults();
+  renderParts();
+  renderStock();
+  $("#modal-back").classList.remove("open");
+  calculate();
+  saveWork();
+}
+
 function handleModalClick(e) {
-  const load = e.target.getAttribute && e.target.getAttribute("data-load");
-  const del = e.target.getAttribute && e.target.getAttribute("data-delproj");
+  const t = e.target;
+  const load = t.getAttribute && t.getAttribute("data-load");
+  const del = t.getAttribute && t.getAttribute("data-delproj");
   if (load) {
-    const pr = lsProjects()[load];
-    if (pr) {
-      state = JSON.parse(JSON.stringify(pr.state));
-      // un fil sauvegardé (non vide) est un choix délibéré : le pré-remplissage
-      // automatique ne doit pas l'écraser
-      state.parts.forEach(p => { if (p.grain) p.grainSet = true; });
-      const st = pr.settings || {};
-      if (st.unit !== undefined) $("#set-unit").value = st.unit;
-      if (st.kerf !== undefined) $("#set-kerf").value = st.kerf;
-      if (st.dec !== undefined) $("#set-dec").value = st.dec;
-      if (st.order !== undefined) $("#set-order").value = st.order;
-      applyAutoDefaults();
-      renderParts();
-      renderStock();
-      $("#modal-back").classList.remove("open");
-      calculate();
-    }
+    loadProject(load);
   } else if (del) {
-    if (confirm('Supprimer le projet "' + del + '" ?')) {
-      const pr = lsProjects();
-      delete pr[del];
-      localStorage.setItem(LS_KEY, JSON.stringify(pr));
-      loadProjectModal();
-    }
+    askConfirm("Supprimer le projet", '<p>Supprimer définitivement le projet « <b>' + esc(del) + "</b> » ?</p>", "Supprimer")
+      .then(ok => {
+        if (!ok) return;
+        const pr = lsProjects();
+        delete pr[del];
+        writeProjects(pr);
+        loadProjectModal();
+      });
   }
 }
 
 /* ============================ Initialisation ============================ */
 
 function resetAll() {
-  if (!confirm("Effacer toutes les pièces et panneaux ?")) return;
-  state = { parts: [], stock: [] };
-  renderParts();
-  renderStock();
-  $("#results").innerHTML = '<div class="empty-msg">Ajoutez vos pièces et vos panneaux : le plan de coupe se recalcule automatiquement à chaque modification.</div>';
-  lastResult = null;
+  return askConfirm("Tout effacer", "<p>Effacer toutes les pièces et tous les panneaux ?</p>", "Effacer").then(ok => {
+    if (!ok) return;
+    state = { parts: [], stock: [] };
+    renderParts();
+    renderStock();
+    $("#results").innerHTML = '<div class="empty-msg">Ajoutez vos pièces et vos panneaux : le plan de coupe se recalcule automatiquement à chaque modification.</div>';
+    lastResult = null;
+    lastPlanHtml = "";
+    saveWork();
+  });
 }
 
-// Recalcul automatique : le plan de coupe se met à jour tout seul après chaque
+// Recalcul automatique : le plan se met à jour tout seul après chaque
 // modification (léger différé pour laisser finir la saisie)
 let calcTimer = null;
 function scheduleCalc() {
   if (calcTimer) clearTimeout(calcTimer);
-  calcTimer = setTimeout(() => { calcTimer = null; calculate(); }, 250);
+  calcTimer = setTimeout(() => {
+    calcTimer = null;
+    calculate();
+    saveWork();
+  }, 250);
 }
 
-bindTable("#parts-table", state.parts, renderParts);
+/* ---------- Branchements ---------- */
+
+bindTable("#parts-table", () => state.parts, renderParts);
+bindTable("#stock-table", () => state.stock, () => { applyAutoDefaults(); renderStock(); renderParts(); });
+
 // Le fil choisi manuellement dans le menu déroulant est un choix délibéré :
 // le pré-remplissage automatique ne doit pas l'écraser
 $("#parts-table").addEventListener("input", (e) => {
   const t = e.target;
-  if (t.getAttribute("data-f") !== "grain") return;
+  const f = t.getAttribute("data-f");
   const i = parseInt(t.getAttribute("data-i"), 10);
-  if (state.parts[i]) state.parts[i].grainSet = true;
+  if (!state.parts[i]) return;
+  // un champ touché par l'utilisateur n'est plus rempli automatiquement
+  if (f === "grain") state.parts[i].grainSet = true;
+  else if (f === "th") state.parts[i].thSet = true;
+  else if (f === "mat") state.parts[i].matSet = true;
 });
-bindTable("#stock-table", state.stock, () => { applyAutoDefaults(); renderStock(); renderParts(); });
-// Le libellé d'un panneau modifié doit se répercuter dans les sélecteurs des pièces.
+
 // Changer le fil d'un panneau applique ce fil à toute la colonne « Fil » des
-// pièces à découper, quand tous les panneaux du stock partagent le même fil.
+// pièces quand tous les panneaux partagent le même fil. Les autres champs ne
+// re-rendent pas la liste des pièces : la saisie reste fluide.
 $("#stock-table").addEventListener("input", (e) => {
+  const f = e.target.getAttribute && e.target.getAttribute("data-f");
+  if (f !== "grain" && f !== "label") {
+    applyAutoDefaults();
+    return;
+  }
   applyAutoDefaults();
-  const t = e.target;
-  if (t.getAttribute && t.getAttribute("data-f") === "grain") {
+  if (f === "grain") {
     const grains = [...new Set(state.stock.map(s => (s.grain === "L" || s.grain === "W") ? s.grain : ""))];
     if (grains.length === 1) state.parts.forEach(p => { p.grain = grains[0]; });
   }
   renderParts();
 });
+
 $("#btn-add-part").addEventListener("click", () => {
-  state.parts.push({ label: "", w: "", h: "", qty: "1", grain: "", stockRef: "", color: randomPartColor() });
+  state.parts.push({ label: "", w: "", h: "", qty: "1", grain: "", stockRef: "", color: randomPartColor(), th: "", mat: "", thSet: false, matSet: false });
   applyAutoDefaults();
   renderParts();
   const items = $("#parts-table").querySelectorAll(".part-item");
@@ -2292,8 +2894,9 @@ $("#btn-add-part").addEventListener("click", () => {
   }
   scheduleCalc();
 });
+
 $("#btn-add-stock").addEventListener("click", () => {
-  state.stock.push({ label: "", w: "", h: "", qty: "1", grain: "L", cutDir: "W", sid: newSid() });
+  state.stock.push({ label: "", w: "", h: "", qty: "1", grain: "L", cutDir: "W", th: "", mat: "", sid: newSid() });
   applyAutoDefaults();
   renderStock();
   renderParts(); // rafraîchit la liste des panneaux dans le sélecteur des pièces
@@ -2305,13 +2908,17 @@ $("#btn-add-stock").addEventListener("click", () => {
   }
   scheduleCalc();
 });
+
 // Toute modification relance le calcul automatiquement
 ["#parts-table", "#stock-table"].forEach(sel => {
   $(sel).addEventListener("input", scheduleCalc);
   $(sel).addEventListener("click", scheduleCalc);
 });
-["#set-unit", "#set-kerf", "#set-dec", "#set-order"].forEach(sel => $(sel).addEventListener("input", scheduleCalc));
+["#set-unit", "#set-kerf", "#set-dec", "#set-order", "#set-objective", "#set-trim"]
+  .forEach(sel => $(sel).addEventListener("input", scheduleCalc));
+
 $("#btn-calc").addEventListener("click", calculate);
+
 // Menu burger : ouverture, fermeture au clic extérieur et après chaque action
 const appMenu = $("#app-menu");
 $("#btn-menu").addEventListener("click", (e) => {
@@ -2329,6 +2936,7 @@ document.addEventListener("click", (e) => {
     $("#btn-menu").setAttribute("aria-expanded", "false");
   }
 });
+
 $("#btn-save").addEventListener("click", saveProject);
 $("#btn-load").addEventListener("click", loadProjectModal);
 $("#btn-export-bak").addEventListener("click", exportBackup);
@@ -2344,6 +2952,23 @@ $("#modal-back").addEventListener("click", (e) => {
   if (e.target === $("#modal-back")) $("#modal-back").classList.remove("open");
 });
 
+// Dialogue générique (confirmation / saisie / information)
+$("#dialog-ok").addEventListener("click", () => {
+  dialogClose(dialogInputVisible() ? $("#dialog-input").value : true);
+});
+$("#dialog-cancel").addEventListener("click", () => dialogClose(null));
+$("#dialog-back").addEventListener("click", (e) => {
+  if (e.target === $("#dialog-back")) dialogClose(null);
+});
+document.addEventListener("keydown", (e) => {
+  if (!$("#dialog-back").classList.contains("open")) return;
+  if (e.key === "Escape") { e.preventDefault(); dialogClose(null); }
+  else if (e.key === "Enter") {
+    e.preventDefault();
+    dialogClose(dialogInputVisible() ? $("#dialog-input").value : true);
+  }
+});
+
 document.querySelectorAll(".hint-toggle").forEach(btn => {
   btn.addEventListener("click", () => {
     const wrap = btn.closest(".hint-wrap");
@@ -2354,9 +2979,16 @@ document.querySelectorAll(".hint-toggle").forEach(btn => {
   });
 });
 
+/* ---------- Démarrage ---------- */
+
+// L'état courant est restauré s'il existe, sinon on part de l'exemple fourni.
+restoreWork();
 applyAutoDefaults();
 renderParts();
 renderStock();
+calculate();
+saveWork();
+
 </script>
 </body>
 </html>
