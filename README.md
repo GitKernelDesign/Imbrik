@@ -10,6 +10,7 @@
 - Visualisation du placement des pièces sur chaque panneau, avec le sens du fil du bois
 - Minimisation des chutes et du gaspillage de matière
 - Export du plan de découpe (CSV, PNG, impression / PDF)
+- **Étiquettes d'identification** pour les pièces découpées et les chutes : 105 × 57 mm, 10 par feuille A4
 
 ### Nouveautés de la version 1.5.0
 
@@ -18,6 +19,7 @@
 - **Épaisseur et matière** par panneau et par pièce : une pièce ne peut plus être placée sur un panneau d'une autre épaisseur ou d'une autre matière.
 - **Marge de rabotage** : retrait d'une bande sur les quatre bords du panneau (délignage, équerrage) avant placement.
 - **Chutes réutilisables** : un bouton ajoute les chutes du plan au stock pour la découpe suivante.
+- **Impression d'étiquettes** (menu ☰ → Étiquettes) : planche de 10 étiquettes 105 × 57 mm par feuille A4, avec nom, dimensions, numéro et matière. Un menu permet de choisir les éléments (pièces, chutes ou les deux), le contenu et la mise en page.
 - **Sauvegarde automatique** de l'état courant : un rafraîchissement ne perd plus le travail en cours.
 - **Boîtes de dialogue intégrées** à la place des fenêtres natives du navigateur.
 - Champs étiquetés pour les lecteurs d'écran, export CSV correctement échappé.
@@ -45,6 +47,7 @@ La version 1.4.2 est disponible dans les [releases](https://github.com/GitKernel
 3. Choisissez le critère d'optimisation et, si besoin, la largeur de coupe et la marge de rabotage.
 4. Le plan se recalcule automatiquement ; le bouton « Calculer » reste disponible.
 5. Exportez le plan en CSV, PNG ou imprimez-le.
+6. Pour identifier les pièces à l'atelier : menu ☰ → **Étiquettes**. À l'impression, choisissez des marges « aucune » et une échelle de 100 % pour respecter le format 105 × 57 mm.
 
 ## Licence
 

@@ -1007,12 +1007,160 @@
   }
 
   /* ============ Print ============ */
+  /* ============ Formulaire des étiquettes ============ */
+  .label-form { display: flex; flex-direction: column; gap: 12px; }
+
+  .label-form .label-intro {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .label-form .label-field label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .label-checks {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px 10px;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px 12px;
+  }
+
+  .label-checks legend {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    font-weight: 700;
+    padding: 0 4px;
+  }
+
+  .label-checks label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  .label-checks input[type="checkbox"] { margin: 0; }
+
+  .label-form .label-hint {
+    margin: 0;
+    font-size: 11.5px;
+    color: var(--muted);
+    background: #f8fafc;
+    border-left: 3px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    line-height: 1.5;
+  }
+
+  .label-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+  /* ============ Feuille d'étiquettes 105 × 57 mm (10 par A4) ============ */
+  /* Masquée à l'écran : elle n'existe que pour l'impression. */
+  #label-print { display: none; }
+
+  #label-print .label-sheet {
+    display: grid;
+    grid-template-columns: 105mm 105mm;
+    grid-auto-rows: 57mm;
+    width: 210mm;
+    height: 297mm;
+    padding: 6mm 0;
+    box-sizing: border-box;
+    background: #fff;
+    color: #0f172a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+
+  #label-print .label {
+    box-sizing: border-box;
+    padding: 3.5mm 4mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.2mm;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  #label-print .label.cut { border: 0.25mm dashed #b9c2cf; }
+
+  #label-print .lb-name {
+    font-size: 5.6mm;
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #label-print .lb-dims {
+    font-size: 4.6mm;
+    font-weight: 600;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  #label-print .lb-num {
+    font-size: 3.6mm;
+    font-weight: 500;
+    color: #334155;
+  }
+
+  #label-print .lb-mat {
+    font-size: 3.2mm;
+    color: #334155;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #label-print .lb-panel {
+    font-size: 2.7mm;
+    color: #7b8794;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #label-print .label-sheet.big .lb-name { font-size: 7.4mm; }
+  #label-print .label-sheet.big .lb-dims { font-size: 5.8mm; }
+  #label-print .label-sheet.big .lb-num { font-size: 4.4mm; }
+  #label-print .label-sheet.big .lb-mat { font-size: 3.8mm; }
+
+  /* ============ Impression ============ */
   @media print {
     header, #btn-calc, .panel, .btn-add, .no-print, .plan-tools, .modal-back, #tooltip { display: none !important; }
     main { grid-template-columns: 1fr; padding: 0; }
     body { background: #fff; }
     .sheet-card { break-inside: avoid; page-break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
     .stat { box-shadow: none; }
+
+    /* Mode étiquettes : seule la planche est imprimée, sur une page A4 sans marge */
+    @page etiquette { size: A4 portrait; margin: 0; }
+
+    body.label-mode > *:not(#label-print) { display: none !important; }
+    body.label-mode #label-print { display: block !important; }
+
+    #label-print .label-sheet { page: etiquette; break-after: page; page-break-after: always; }
+    #label-print .label-sheet:last-child { break-after: auto; page-break-after: auto; }
   }
 
   /* ============ Responsive tweaks ============ */
@@ -1076,6 +1224,10 @@
       <button id="btn-print">
         <svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
         Imprimer / PDF
+      </button>
+      <button id="btn-labels">
+        <svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 13.42 20.6a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+        Étiquettes
       </button>
       <button id="btn-reset">
         <svg class="mi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
@@ -1181,6 +1333,9 @@
 </main>
 
 <div id="tooltip"></div>
+
+<!-- Étiquettes : rempli au moment de l'impression, masqué à l'écran -->
+<div id="label-print" aria-hidden="true"></div>
 
 <div class="modal-back" id="modal-back">
   <div class="modal">
@@ -1601,7 +1756,8 @@ function pieceFitsSheet(p, sheet) {
   if (p.stockSid && p.stockSid !== sheet.sid) return false;
   if (p.th !== null && p.th !== undefined && sheet.th !== null && sheet.th !== undefined &&
       Math.abs(p.th - sheet.th) > 0.01) return false;
-  if (p.mat && sheet.mat && p.mat !== sheet.mat) return false;
+  // comparaison insensible à la casse et aux espaces : « CP » et « cp » sont la même matière
+  if (p.mat && sheet.mat && normMat(p.mat) !== normMat(sheet.mat)) return false;
   return true;
 }
 
@@ -1862,7 +2018,7 @@ function makeSheet(t, trim) {
 function stockTypes(stockList) {
   const map = new Map();
   for (const s of stockList) {
-    const key = [s.w, s.h, s.grain, s.cutDir, s.sid, s.th === null ? "" : s.th, s.mat].join("|");
+    const key = [s.w, s.h, s.grain, s.cutDir, s.sid, s.th === null ? "" : s.th, normMat(s.mat)].join("|");
     let t = map.get(key);
     if (!t) { t = Object.assign({}, s, { count: 0 }); map.set(key, t); }
     t.count += s.qty;
@@ -1988,7 +2144,7 @@ function readInputs() {
     parts.push({
       label: (p.label || "P" + (i + 1)).trim(), w, h, qty,
       rotatable: grain === "", grain, stockSid, color: p.color || "",
-      th: toThickness(p.th), mat: normMat(p.mat)
+      th: toThickness(p.th), mat: str(p.mat).trim()
     });
   });
 
@@ -2006,7 +2162,7 @@ function readInputs() {
       label: (s.label || "Panneau " + w + "×" + h).trim(), w, h, qty,
       grain: (s.grain === "L" || s.grain === "W" || s.grain === "") ? s.grain : "",
       cutDir: (s.cutDir === "L" || s.cutDir === "W" || s.cutDir === "") ? s.cutDir : "",
-      sid: s.sid, th: toThickness(s.th), mat: normMat(s.mat)
+      sid: s.sid, th: toThickness(s.th), mat: str(s.mat).trim()
     });
   });
 
@@ -2060,11 +2216,13 @@ function calculate() {
   for (const s of res.sheets) {
     const sig = s.used.map(pl => [pl.p.label, +pl.x.toFixed(6), +pl.y.toFixed(6), +pl.w.toFixed(6), +pl.h.toFixed(6), pl.rotated].join("|")).sort().join(";");
     let g = groups.find(g => g.sig === sig && g.w === s.w && g.h === s.h && g.label === s.label &&
-      g.grain === s.grain && g.cutDir === s.cutDir && g.trim === s.trim && g.swapped === s.swapped);
+      g.grain === s.grain && g.cutDir === s.cutDir && g.trim === s.trim && g.swapped === s.swapped &&
+      g.mat === s.mat && g.th === s.th);
     if (!g) {
       g = {
         sig, w: s.w, h: s.h, label: s.label, grain: s.grain, cutDir: s.cutDir,
-        trim: s.trim, swapped: s.swapped, count: 0, used: s.used, free: s.free || []
+        trim: s.trim, swapped: s.swapped, count: 0, used: s.used, free: s.free || [],
+        mat: s.mat, th: s.th
       };
       groups.push(g);
     }
@@ -2544,6 +2702,198 @@ function exportImage() {
   });
 }
 
+/* ============================ Étiquettes ============================ */
+
+// Planche 105 × 57 mm : 2 colonnes × 5 lignes = 10 étiquettes par feuille A4
+// (2 × 105 = 210 mm de large, 5 × 57 = 285 mm de haut, 6 mm de marge en haut et
+// en bas pour compléter les 297 mm).
+const LABEL_COLS = 2;
+const LABEL_ROWS = 5;
+const LABEL_PER_SHEET = LABEL_COLS * LABEL_ROWS;
+
+function thicknessText(th) {
+  if (th === null || th === undefined || th === "") return "";
+  const n = Number(th);
+  if (!isFinite(n) || n <= 0) return "";
+  return fmtDim(n, Math.max(0, parseInt($("#set-dec").value || "0", 10))) + unitSuffix();
+}
+
+function labelMaterialLine(it) {
+  const m = str(it.mat).trim();
+  const t = thicknessText(it.th);
+  if (m && t) return m + " — " + t;
+  return m || t;
+}
+
+// Une entrée par étiquette à imprimer, dans l'ordre du plan de coupe.
+function collectLabels(what, mode) {
+  const out = [];
+  if (!lastResult) return out;
+  const wantPieces = what === "both" || what === "pieces";
+  const wantOffcuts = what === "both" || what === "offcuts";
+
+  if (wantPieces) {
+    // Dimensions nominales de la pièce (celles de la liste) et non celles de la
+    // pose : une pièce pivotée doit s'identifier par ses dimensions d'origine.
+    const keyOf = (pl) => pl.p.label + "|" + pl.p.w + "|" + pl.p.h;
+    const matOf = (pl, s) => pl.p.mat || s.mat || "";
+    const thOf = (pl, s) => (pl.p.th === null || pl.p.th === undefined) ? s.th : pl.p.th;
+
+    if (mode === "ref") {
+      const map = new Map();
+      lastResult.sheets.forEach(s => s.used.forEach(pl => {
+        const k = keyOf(pl);
+        const cur = map.get(k);
+        if (cur) cur.count++;
+        else map.set(k, {
+          kind: "piece", name: pl.p.label, w: pl.p.w, h: pl.p.h,
+          mat: matOf(pl, s), th: thOf(pl, s), count: 1
+        });
+      }));
+      map.forEach(v => out.push(v));
+    } else {
+      const totals = new Map();
+      lastResult.sheets.forEach(s => s.used.forEach(pl => {
+        const k = keyOf(pl);
+        totals.set(k, (totals.get(k) || 0) + 1);
+      }));
+      const seen = new Map();
+      lastResult.sheets.forEach((s, si) => {
+        s.used.forEach(pl => {
+          const k = keyOf(pl);
+          const idx = (seen.get(k) || 0) + 1;
+          seen.set(k, idx);
+          out.push({
+            kind: "piece", name: pl.p.label, w: pl.p.w, h: pl.p.h,
+            mat: matOf(pl, s), th: thOf(pl, s),
+            index: idx, total: totals.get(k) || idx,
+            panel: s.label, sheet: si + 1
+          });
+        });
+      });
+    }
+  }
+
+  if (wantOffcuts) {
+    const minSide = minOffcut();
+    let n = 0;
+    lastResult.groups.forEach(g => {
+      const chutes = sheetChutes(g).filter(ch => ch.w >= minSide && ch.h >= minSide);
+      for (let copy = 0; copy < g.count; copy++) {
+        chutes.forEach(ch => {
+          n++;
+          out.push({
+            kind: "offcut", index: n, w: ch.w, h: ch.h,
+            mat: g.mat || "", th: g.th, panel: g.label
+          });
+        });
+      }
+    });
+  }
+  return out;
+}
+
+function labelHTML(it, o) {
+  let title = "";
+  if (it.kind === "offcut") title = o.num ? "Chute n° " + it.index : "Chute";
+  else if (o.name) title = esc(it.name);
+
+  let h = '<div class="label' + (o.cut ? " cut" : "") + '">';
+  if (title) h += '<div class="lb-name">' + title + "</div>";
+  if (o.dims) h += '<div class="lb-dims">' + esc(fmtPair(it.w, it.h) + unitSuffix()) + "</div>";
+  if (o.num && it.kind === "piece") {
+    h += '<div class="lb-num">' + (it.count ? "× " + it.count : "Pièce " + it.index + " / " + it.total) + "</div>";
+  }
+  const matLine = labelMaterialLine(it);
+  if (o.mat && matLine) h += '<div class="lb-mat">' + esc(matLine) + "</div>";
+  if (o.panel && it.panel) h += '<div class="lb-panel">' + esc(it.panel) + "</div>";
+  return h + "</div>";
+}
+
+function renderLabelSheets(items, o) {
+  const sheets = [];
+  for (let i = 0; i < items.length; i += LABEL_PER_SHEET) {
+    const page = items.slice(i, i + LABEL_PER_SHEET);
+    sheets.push('<div class="label-sheet' + (o.big ? " big" : "") + '">' +
+      page.map(it => labelHTML(it, o)).join("") + "</div>");
+  }
+  return sheets.join("");
+}
+
+function printLabels(o) {
+  const items = collectLabels(o.what, o.mode);
+  if (!items.length) {
+    notify("Aucune étiquette", "<p>Rien à imprimer : lancez un calcul avec des pièces placées ou des chutes récupérables.</p>");
+    return false;
+  }
+  const host = $("#label-print");
+  host.innerHTML = renderLabelSheets(items, o);
+  document.body.classList.add("label-mode");
+  const cleanup = () => {
+    document.body.classList.remove("label-mode");
+    host.innerHTML = "";
+    window.removeEventListener("afterprint", cleanup);
+  };
+  window.addEventListener("afterprint", cleanup);
+  $("#modal-back").classList.remove("open");
+  setTimeout(() => window.print(), 80);
+  return true;
+}
+
+function showLabelModal() {
+  if (!lastResult || !lastResult.sheets.length) {
+    notify("Aucun plan de coupe", "<p>Lancez d'abord un calcul : les étiquettes reprennent les pièces réellement placées.</p>");
+    return;
+  }
+  const pieces = lastResult.sheets.reduce((t, s) => t + s.used.length, 0);
+  const offcuts = collectOffcuts().reduce((t, o) => t + o.qty, 0);
+  const html =
+    '<div class="label-form">' +
+      '<p class="label-intro">Étiquettes de <b>105 × 57 mm</b>, <b>10 par feuille A4</b> (2 colonnes × 5 lignes). ' +
+      pieces + " pièce(s) placée(s), " + offcuts + " chute(s) récupérable(s).</p>" +
+      '<div class="label-field"><label for="lbl-what">Éléments à imprimer</label>' +
+        '<select id="lbl-what">' +
+          '<option value="both">Pièces et chutes</option>' +
+          '<option value="pieces">Pièces découpées</option>' +
+          '<option value="offcuts">Chutes</option>' +
+        "</select></div>" +
+      '<div class="label-field"><label for="lbl-mode">Pièces : une étiquette…</label>' +
+        '<select id="lbl-mode">' +
+          '<option value="piece">…par pièce, numérotée (n / total)</option>' +
+          '<option value="ref">…par référence, avec la quantité</option>' +
+        "</select></div>" +
+      '<fieldset class="label-checks"><legend>Contenu</legend>' +
+        '<label><input type="checkbox" id="lbl-name" checked> Nom</label>' +
+        '<label><input type="checkbox" id="lbl-dims" checked> Dimensions</label>' +
+        '<label><input type="checkbox" id="lbl-num" checked> Numéro</label>' +
+        '<label><input type="checkbox" id="lbl-mat" checked> Matière</label>' +
+        '<label><input type="checkbox" id="lbl-panel"> Panneau d\'origine</label>' +
+      "</fieldset>" +
+      '<fieldset class="label-checks"><legend>Mise en page</legend>' +
+        '<label><input type="checkbox" id="lbl-cut" checked> Traits de coupe</label>' +
+        '<label><input type="checkbox" id="lbl-big"> Texte agrandi</label>' +
+      "</fieldset>" +
+      '<p class="label-hint">À l\'impression : marges « aucune » et échelle 100 % pour respecter le format 105 × 57 mm. ' +
+      "Seules les chutes d'au moins " + fmtDim(minOffcut(), 0) + " × " + fmtDim(minOffcut(), 0) + unitSuffix() +
+      " reçoivent une étiquette.</p>" +
+      '<div class="label-actions"><button id="lbl-do" class="primary">Imprimer les étiquettes</button></div>' +
+    "</div>";
+  openModal("Imprimer des étiquettes", html);
+  $("#lbl-do").addEventListener("click", () => {
+    printLabels({
+      what: $("#lbl-what").value,
+      mode: $("#lbl-mode").value,
+      name: $("#lbl-name").checked,
+      dims: $("#lbl-dims").checked,
+      num: $("#lbl-num").checked,
+      mat: $("#lbl-mat").checked,
+      panel: $("#lbl-panel").checked,
+      cut: $("#lbl-cut").checked,
+      big: $("#lbl-big").checked
+    });
+  });
+}
+
 /* ============================ Boîtes de dialogue ============================ */
 
 let dialogResolve = null;
@@ -2944,7 +3294,13 @@ $("#btn-import-bak").addEventListener("click", importBackup);
 $("#modal-body").addEventListener("click", handleModalClick);
 $("#btn-csv").addEventListener("click", exportCSV);
 $("#btn-img").addEventListener("click", exportImage);
-$("#btn-print").addEventListener("click", () => window.print());
+$("#btn-print").addEventListener("click", () => {
+  // impression du plan : on s'assure qu'aucune planche d'étiquettes ne traîne
+  document.body.classList.remove("label-mode");
+  $("#label-print").innerHTML = "";
+  window.print();
+});
+$("#btn-labels").addEventListener("click", showLabelModal);
 $("#btn-reset").addEventListener("click", resetAll);
 $("#btn-license").addEventListener("click", showLicenseModal);
 $("#modal-close").addEventListener("click", () => $("#modal-back").classList.remove("open"));
