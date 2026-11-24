@@ -28,17 +28,33 @@
 
 L'application est un fichier HTML autonome, 100 % local (aucune donnée envoyée) : [`Imbrik-v1.5.0.html`](Imbrik-v1.5.0.html). Ouvrez-le directement dans un navigateur pour l'utiliser.
 
-## Téléchargement
+## Applications de bureau
 
-> **Note** : les exécutables publiés ci-dessous ont été construits à partir de la version **1.4.2**. Le code source du dépôt est en **1.5.0** ; les applications packagées seront régénérées à la prochaine publication. En attendant, la version 1.5.0 s'utilise en ouvrant le fichier HTML dans un navigateur.
+Les applications sont empaquetées avec **[Tauri](https://tauri.app)** (webview du système) et non plus avec Electron : le binaire fait 4,7 Mo au lieu de 115 Mo, pour un rendu identique puisque l'interface est le fichier HTML du dépôt.
 
-La version 1.4.2 est disponible dans les [releases](https://github.com/GitKernelDesign/Imbrik/releases) :
+| Fichier | Plateforme | Taille | Description |
+|---|---|---|---|
+| `Imbrik-1.5.0-x64-setup.exe` | Windows 64 bits | 1,4 Mo | Installateur (NSIS) |
+| `Imbrik-1.5.0-x64-portable.exe` | Windows 64 bits | 3,4 Mo | Exécutable seul, sans installation |
+| `Imbrik-1.5.0-x86_64.AppImage` | Linux 64 bits | 96 Mo | AppImage autonome (WebKitGTK embarqué) |
+| `Imbrik-1.5.0-amd64.deb` | Debian / Ubuntu | 2,0 Mo | Paquet système (utilise le WebKitGTK de la distribution) |
 
-| Fichier | Plateforme | Description |
-|---|---|---|
-| `Imbrik-1.4.2-x64-setup.exe` | Windows 64 bits | Installateur |
-| `Imbrik-1.4.2-x64-portable.exe` | Windows 64 bits | Version portable (sans installation) |
-| `Imbrik-1.4.2-x86_64.AppImage` | Linux 64 bits | AppImage universel |
+Les fichiers `.exe`, `.deb` et `.AppImage` ne sont pas versionnés dans le dépôt : ils sont joints aux [releases](https://github.com/GitKernelDesign/Imbrik/releases).
+
+Sous Windows, la version portable et l'installateur nécessitent le *WebView2 Runtime*, déjà présent sur Windows 10 (à jour) et Windows 11 ; l'installateur le télécharge si besoin.
+
+> Dans la version de bureau, « Exporter » ouvre une boîte « Enregistrer sous » native et « Imprimer » ouvre le document dans le navigateur par défaut, qui affiche la boîte de dialogue d'impression. Le fichier HTML, lui, garde le comportement du navigateur.
+
+## Compilation
+
+```sh
+bash scripts/build.sh                 # Linux : .deb + AppImage
+bash scripts/build-windows.sh         # Windows depuis Linux : .exe + installateur
+```
+
+Prérequis Linux : `rust` (stable), `cargo`, les en-têtes GTK3 et WebKitGTK 4.1, et le CLI Tauri (`cargo install tauri-cli --version '^2' --locked`, ou le binaire précompilé des releases). Sans droits root, `bash scripts/dev-deps.sh` installe les en-têtes dans `~/imbrik-deps` et `scripts/build.sh` les utilise automatiquement.
+
+La source unique de l'interface reste `Imbrik-v1.5.0.html` ; `scripts/prepare-ui.sh` en fait `ui-dist/index.html` et y injecte `src-tauri/src/bridge.js`, qui redirige vers le natif les deux seules fonctions absentes d'une webview (téléchargement de fichier et `window.print()`).
 
 ## Utilisation
 

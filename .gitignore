@@ -1,5 +1,14 @@
-# Les exécutables sont trop volumineux pour Git : ils sont publiés dans les releases GitHub
+# binaires et sorties de build
 *.exe
 *.AppImage
 *.dmg
 *.msi
+*.deb
+*.rpm
+*.app
+target/
+src-tauri/target/
+src-tauri/gen/
+ui-dist/
+node_modules/
+.DS_Store

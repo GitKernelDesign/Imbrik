@@ -1,0 +1,44 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Imbrik",
+  "version": "1.5.0",
+  "identifier": "net.kerneldesign.imbrik",
+  "build": {
+    "frontendDist": "../ui-dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "IMBRIK 1.5.0 — Optimiseur de découpe",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 960,
+        "minHeight": 620,
+        "resizable": true,
+        "center": true,
+        "decorations": true,
+        "visible": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb", "appimage"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico",
+      "icons/icon.png"
+    ],
+    "category": "Productivity",
+    "shortDescription": "Optimiseur de découpe de panneaux",
+    "longDescription": "Imbrik calcule un plan de découpe guillotine pour minimiser les chutes et le nombre de panneaux utilisés, puis imprime les étiquettes d'identification des pièces et des chutes.",
+    "copyright": "GPL-3.0-or-later",
+    "license": "GPL-3.0-or-later"
+  }
+}
