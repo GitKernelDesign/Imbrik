@@ -1058,6 +1058,14 @@
 
   .label-checks input[type="checkbox"] { margin: 0; }
 
+  .label-form .label-opt {
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 500;
+    color: var(--muted-light);
+    font-size: 10px;
+  }
+
   .label-form .label-hint {
     margin: 0;
     font-size: 11.5px;
@@ -1100,6 +1108,21 @@
   }
 
   #label-print .label.cut { border: 0.25mm dashed #b9c2cf; }
+
+  #label-print .lb-order {
+    font-size: 3.1mm;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #64748b;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-bottom: 0.8mm;
+    border-bottom: 0.2mm solid #dbe1ea;
+  }
+
+  #label-print .label-sheet.big .lb-order { font-size: 3.6mm; }
 
   #label-print .lb-name {
     font-size: 5.6mm;
@@ -2799,6 +2822,7 @@ function labelHTML(it, o) {
   else if (o.name) title = esc(it.name);
 
   let h = '<div class="label' + (o.cut ? " cut" : "") + '">';
+  if (o.order) h += '<div class="lb-order">' + esc(o.order) + "</div>";
   if (title) h += '<div class="lb-name">' + title + "</div>";
   if (o.dims) h += '<div class="lb-dims">' + esc(fmtPair(it.w, it.h) + unitSuffix()) + "</div>";
   if (o.num && it.kind === "piece") {
@@ -2851,6 +2875,9 @@ function showLabelModal() {
     '<div class="label-form">' +
       '<p class="label-intro">Étiquettes de <b>105 × 57 mm</b>, <b>10 par feuille A4</b> (2 colonnes × 5 lignes). ' +
       pieces + " pièce(s) placée(s), " + offcuts + " chute(s) récupérable(s).</p>" +
+      '<div class="label-field"><label for="lbl-order">Commande / client <span class="label-opt">facultatif</span></label>' +
+        '<input type="text" id="lbl-order" placeholder="ex. : Dupont — cuisine" ' +
+        'aria-label="Nom de la commande ou du client, imprimé sur chaque étiquette"></div>' +
       '<div class="label-field"><label for="lbl-what">Éléments à imprimer</label>' +
         '<select id="lbl-what">' +
           '<option value="both">Pièces et chutes</option>' +
@@ -2881,6 +2908,7 @@ function showLabelModal() {
   openModal("Imprimer des étiquettes", html);
   $("#lbl-do").addEventListener("click", () => {
     printLabels({
+      order: $("#lbl-order").value.replace(/\s+/g, " ").trim(),
       what: $("#lbl-what").value,
       mode: $("#lbl-mode").value,
       name: $("#lbl-name").checked,

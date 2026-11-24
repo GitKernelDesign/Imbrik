@@ -19,7 +19,7 @@
 - **Épaisseur et matière** par panneau et par pièce : une pièce ne peut plus être placée sur un panneau d'une autre épaisseur ou d'une autre matière.
 - **Marge de rabotage** : retrait d'une bande sur les quatre bords du panneau (délignage, équerrage) avant placement.
 - **Chutes réutilisables** : un bouton ajoute les chutes du plan au stock pour la découpe suivante.
-- **Impression d'étiquettes** (menu ☰ → Étiquettes) : planche de 10 étiquettes 105 × 57 mm par feuille A4, avec nom, dimensions, numéro et matière. Un menu permet de choisir les éléments (pièces, chutes ou les deux), le contenu et la mise en page.
+- **Impression d'étiquettes** (menu ☰ → Étiquettes) : planche de 10 étiquettes 105 × 57 mm par feuille A4, avec nom, dimensions, numéro et matière. Un menu permet de saisir le nom de la commande ou du client (reporté sur chaque étiquette) et de choisir les éléments (pièces, chutes ou les deux), le contenu et la mise en page.
 - **Sauvegarde automatique** de l'état courant : un rafraîchissement ne perd plus le travail en cours.
 - **Boîtes de dialogue intégrées** à la place des fenêtres natives du navigateur.
 - Champs étiquetés pour les lecteurs d'écran, export CSV correctement échappé.
