@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img">
+  <title>Imbrik</title>
+  <desc>Deux panneaux empilés séparés par un trait de coupe, sur fond indigo.</desc>
+  <!-- fond arrondi -->
+  <rect width="24" height="24" rx="5" fill="#6366f1"/>
+  <!-- panneau du haut -->
+  <rect x="8" y="4.5" width="8" height="5.5" rx="1.5" fill="#ffffff"/>
+  <!-- panneau du bas, légèrement en retrait : la chute -->
+  <rect x="8" y="12" width="8" height="8" rx="1.5" fill="#ffffff" fill-opacity="0.7"/>
+</svg>

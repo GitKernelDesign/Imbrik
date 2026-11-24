@@ -1,4 +1,4 @@
-# Imbrik
+# <img src="icon.svg" width="32" alt=""> Imbrik
 
 **Imbrik** est un optimiseur de découpe de panneaux (*panel cutting optimizer*). À partir d'une liste de pièces à produire et des panneaux disponibles, il calcule automatiquement un plan de découpe qui minimise les chutes et le nombre de panneaux utilisés.
 
