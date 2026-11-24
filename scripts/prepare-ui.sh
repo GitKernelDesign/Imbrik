@@ -1,12 +1,19 @@
 #!/bin/sh
-# Prépare le dossier servi par la webview Tauri.
-# La source unique de vérité reste Imbrik-v<version>.html à la racine :
-# ui-dist/index.html en est une copie, avec le pont natif injecté ainsi que
-# le script de génération de ui-dist/bridge.js.
+# Prépare les copies de l'interface servies par les deux empaqueteurs.
+# La source unique de vérité reste Imbrik-v<version>.html à la racine.
+#
+#   ui-dist/index.html       -> Tauri, avec le pont natif bridge.js injecté
+#   electron/app/index.html  -> Electron, copie brute (Electron sait déjà
+#                               télécharger un fichier et imprimer)
 set -e
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 SRC=$(ls "$ROOT"/Imbrik-v*.html | sort -V | tail -1)
 
+# --- Electron : copie brute ------------------------------------------------
+mkdir -p "$ROOT/electron/app"
+cp "$SRC" "$ROOT/electron/app/index.html"
+
+# --- Tauri : copie + pont natif -------------------------------------------
 mkdir -p "$ROOT/ui-dist"
 cp "$ROOT/src-tauri/src/bridge.js" "$ROOT/ui-dist/bridge.js"
 
@@ -25,4 +32,5 @@ if "bridge.js" not in html:
 open(dest, "w", encoding="utf-8").write(html)
 PY
 
-echo "ui-dist/index.html <- $(basename "$SRC") (+ bridge.js)"
+echo "ui-dist/index.html      <- $(basename "$SRC") (+ bridge.js)"
+echo "electron/app/index.html <- $(basename "$SRC")"

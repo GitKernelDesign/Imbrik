@@ -1,0 +1,89 @@
+{
+  "name": "imbrik",
+  "productName": "Imbrik",
+  "version": "1.5.0",
+  "description": "Optimiseur de découpe de panneaux",
+  "author": "Imbrik",
+  "license": "GPL-3.0-or-later",
+  "homepage": "https://kerneldesign.net/ressources/imbrik/",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "prep": "sh ../scripts/prepare-ui.sh",
+    "build:linux": "electron-builder --linux AppImage",
+    "build:win": "electron-builder --win nsis portable"
+  },
+  "devDependencies": {
+    "electron": "45.4.1",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "net.kerneldesign.imbrik",
+    "productName": "Imbrik",
+    "copyright": "Copyright (C) 2025 Imbrik — GPL-3.0-or-later",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "app/**/*"
+    ],
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Office",
+      "icon": "build/icon.png",
+      "synopsis": "Optimiseur de découpe de panneaux",
+      "description": "Imbrik calcule un plan de découpe guillotine pour minimiser les chutes et le nombre de panneaux utilisés, puis imprime les étiquettes d'identification des pièces et des chutes.",
+      "desktop": {
+        "entry": {
+          "Name": "Imbrik",
+          "Comment": "Optimiseur de découpe de panneaux",
+          "Keywords": "découpe;panneau;optimisation;menuiserie;chute;"
+        }
+      }
+    },
+    "appImage": {
+      "artifactName": "Imbrik-${version}-x86_64.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Imbrik",
+      "artifactName": "Imbrik-${version}-x64-setup.${ext}",
+      "uninstallDisplayName": "Imbrik ${version}"
+    },
+    "portable": {
+      "artifactName": "Imbrik-${version}-x64-portable.${ext}",
+      "unicode": true
+    }
+  }
+}

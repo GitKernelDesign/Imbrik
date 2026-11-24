@@ -30,31 +30,31 @@ L'application est un fichier HTML autonome, 100 % local (aucune donnée envoyée
 
 ## Applications de bureau
 
-Les applications sont empaquetées avec **[Tauri](https://tauri.app)** (webview du système) et non plus avec Electron : le binaire fait 4,7 Mo au lieu de 115 Mo, pour un rendu identique puisque l'interface est le fichier HTML du dépôt.
+Les applications sont empaquetées avec **Electron** à partir du fichier HTML : l'interface est exactement celle du dépôt, sans ajout ni retouche. L'icône (`icon.svg`) est embarquée dans chaque exécutable.
 
 | Fichier | Plateforme | Taille | Description |
 |---|---|---|---|
-| `Imbrik-1.5.0-x64-setup.exe` | Windows 64 bits | 1,4 Mo | Installateur (NSIS) |
-| `Imbrik-1.5.0-x64-portable.exe` | Windows 64 bits | 3,4 Mo | Exécutable seul, sans installation |
-| `Imbrik-1.5.0-x86_64.AppImage` | Linux 64 bits | 96 Mo | AppImage autonome (WebKitGTK embarqué) |
-| `Imbrik-1.5.0-amd64.deb` | Debian / Ubuntu | 2,0 Mo | Paquet système (utilise le WebKitGTK de la distribution) |
+| `Imbrik-1.5.0-x64-setup.exe` | Windows 64 bits | 121 Mo | Installateur (NSIS), raccourcis menu Démarrer et bureau |
+| `Imbrik-1.5.0-x64-portable.exe` | Windows 64 bits | 110 Mo | Exécutable seul, sans installation |
+| `Imbrik-1.5.0-x86_64.AppImage` | Linux 64 bits | 126 Mo | AppImage autonome, icône et entrée de bureau intégrées |
 
-Les fichiers `.exe`, `.deb` et `.AppImage` ne sont pas versionnés dans le dépôt : ils sont joints aux [releases](https://github.com/GitKernelDesign/Imbrik/releases).
+Les fichiers `.exe` et `.AppImage` ne sont pas versionnés dans le dépôt : ils sont joints aux [releases](https://github.com/GitKernelDesign/Imbrik/releases).
 
-Sous Windows, la version portable et l'installateur nécessitent le *WebView2 Runtime*, déjà présent sur Windows 10 (à jour) et Windows 11 ; l'installateur le télécharge si besoin.
-
-> Dans la version de bureau, « Exporter » ouvre une boîte « Enregistrer sous » native et « Imprimer » ouvre le document dans le navigateur par défaut, qui affiche la boîte de dialogue d'impression. Le fichier HTML, lui, garde le comportement du navigateur.
+> Dans la version de bureau, l'export d'un fichier ouvre la boîte « Enregistrer sous » du système et l'impression la boîte de dialogue d'impression, comme dans un navigateur.
 
 ## Compilation
 
 ```sh
-bash scripts/build.sh                 # Linux : .deb + AppImage
-bash scripts/build-windows.sh         # Windows depuis Linux : .exe + installateur
+bash scripts/build-electron.sh          # AppImage + installateur + portable
+bash scripts/build-electron.sh linux    # AppImage seulement
+bash scripts/build-electron.sh win      # installateur + portable seulement
 ```
 
-Prérequis Linux : `rust` (stable), `cargo`, les en-têtes GTK3 et WebKitGTK 4.1, et le CLI Tauri (`cargo install tauri-cli --version '^2' --locked`, ou le binaire précompilé des releases). Sans droits root, `bash scripts/dev-deps.sh` installe les en-têtes dans `~/imbrik-deps` et `scripts/build.sh` les utilise automatiquement.
+Prérequis : Node.js (18 ou plus) et `electron/package.json`. Le script prépare `electron/app/index.html` depuis `Imbrik-v1.5.0.html`, installe les dépendances si besoin et laisse les artefacts dans `electron/dist/`.
 
-La source unique de l'interface reste `Imbrik-v1.5.0.html` ; `scripts/prepare-ui.sh` en fait `ui-dist/index.html` et y injecte `src-tauri/src/bridge.js`, qui redirige vers le natif les deux seules fonctions absentes d'une webview (téléchargement de fichier et `window.print()`).
+Les cibles Windows se construisent depuis Linux : NSIS est fourni par electron-builder, et l'extraction du désinstalleur — qui passe normalement par `wine` — est remplacée par une lecture de l'archive NSIS (`electron/scripts/wine-shim.js`). Avec `wine` installé, ce contournement n'est pas nécessaire.
+
+> Le dépôt contient aussi une variante d'empaquetage Tauri dans `src-tauri/` (`scripts/build.sh`), plus légère mais qui demande les en-têtes WebKitGTK. Les applications publiées sont celles construites avec Electron.
 
 ## Utilisation
 
