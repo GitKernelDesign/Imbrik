@@ -11,7 +11,7 @@
   "scripts": {
     "start": "electron .",
     "prep": "sh ../scripts/prepare-ui.sh",
-    "build:linux": "electron-builder --linux AppImage",
+    "build:linux": "electron-builder --linux AppImage --x64 --arm64",
     "build:win": "electron-builder --win nsis portable",
     "build:mac": "electron-builder --mac zip --x64 --arm64"
   },
@@ -36,7 +36,8 @@
         {
           "target": "AppImage",
           "arch": [
-            "x64"
+            "x64",
+            "arm64"
           ]
         }
       ],
@@ -53,7 +54,7 @@
       }
     },
     "appImage": {
-      "artifactName": "Imbrik-${version}-x86_64.${ext}"
+      "artifactName": "Imbrik-${version}-${arch}.${ext}"
     },
     "win": {
       "target": [

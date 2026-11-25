@@ -37,6 +37,7 @@ Les applications sont empaquetées avec **Electron** à partir du fichier HTML :
 | `Imbrik-1.5.0-x64-setup.exe` | Windows 64 bits | 121 Mo | Installateur (NSIS), raccourcis menu Démarrer et bureau |
 | `Imbrik-1.5.0-x64-portable.exe` | Windows 64 bits | 110 Mo | Exécutable seul, sans installation |
 | `Imbrik-1.5.0-x86_64.AppImage` | Linux 64 bits | 126 Mo | AppImage autonome, icône et entrée de bureau intégrées |
+| `Imbrik-1.5.0-arm64.AppImage` | Linux ARM 64 bits (aarch64) | 127 Mo | Même AppImage pour Raspberry Pi 4/5, serveurs ARM, Asahi Linux, etc. |
 | `Imbrik-1.5.0-arm64-mac.zip` | macOS 13+ (Apple Silicon) | 117 Mo | `Imbrik.app` signé ad hoc, à glisser dans le dossier Applications |
 | `Imbrik-1.5.0-x64-mac.zip` | macOS 13+ (Intel) | 123 Mo | `Imbrik.app` signé ad hoc, à glisser dans le dossier Applications |
 
@@ -66,13 +67,17 @@ versions Windows et Linux qui n'affichent aucune barre de menus.
 ## Compilation
 
 ```sh
-bash scripts/build-electron.sh          # AppImage + installateur + portable + macOS
-bash scripts/build-electron.sh linux    # AppImage seulement
+bash scripts/build-electron.sh          # AppImage (x64 + arm64) + installateur + portable + macOS
+bash scripts/build-electron.sh linux    # AppImage x86_64 + arm64 seulement
 bash scripts/build-electron.sh win      # installateur + portable seulement
 bash scripts/build-electron.sh mac      # macOS x64 + arm64 seulement
 ```
 
 Prérequis : Node.js (18 ou plus) et `electron/package.json`. Le script prépare `electron/app/index.html` depuis `Imbrik-v1.5.0.html`, installe les dépendances si besoin et laisse les artefacts dans `electron/dist/`.
+
+Les AppImages se construisent aussi depuis un poste x86_64 : electron-builder
+télécharge Electron pour `arm64` et assemble l'image avec le runtime AppImage
+aarch64. Rien à installer en plus (ni qemu, ni `squashfs-tools`).
 
 Les cibles Windows se construisent depuis Linux : NSIS est fourni par electron-builder, et l'extraction du désinstalleur — qui passe normalement par `wine` — est remplacée par une lecture de l'archive NSIS (`electron/scripts/wine-shim.js`). Avec `wine` installé, ce contournement n'est pas nécessaire.
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Construit les applications Electron d'Imbrik.
-#   Linux  : AppImage
+#   Linux  : AppImage, en x86_64 et arm64 (construits depuis Linux x86_64)
 #   Windows: installateur NSIS + version portable (construits depuis Linux)
 #   macOS  : Imbrik.app zippé, en x64 (Intel) et arm64 (Apple Silicon)
 #
@@ -39,8 +39,10 @@ fi
 [ -d node_modules/electron/dist ] || node node_modules/electron/install.js
 
 if [ "$CIBLE" = "linux" ] || [ "$CIBLE" = "tout" ]; then
-  echo "== AppImage =="
-  npx electron-builder --linux AppImage
+  echo "== AppImage : x86_64 + arm64 =="
+  # Les deux architectures sont explicites : sur la ligne de commande, une
+  # cible nommée prend le pas sur la liste « arch » de package.json.
+  npx electron-builder --linux AppImage --x64 --arm64
 fi
 
 if [ "$CIBLE" = "win" ] || [ "$CIBLE" = "tout" ]; then

@@ -5,6 +5,7 @@ Version 1.5.0 d'Imbrik, optimiseur de découpe de panneaux.
 - `Imbrik-1.5.0-x64-setup.exe` — installateur Windows 64 bits
 - `Imbrik-1.5.0-x64-portable.exe` — version portable Windows 64 bits
 - `Imbrik-1.5.0-x86_64.AppImage` — AppImage Linux 64 bits
+- `Imbrik-1.5.0-arm64.AppImage` — AppImage Linux ARM 64 bits (aarch64)
 - `Imbrik-1.5.0-arm64-mac.zip` — application macOS pour Apple Silicon
 - `Imbrik-1.5.0-x64-mac.zip` — application macOS pour Mac Intel
 
