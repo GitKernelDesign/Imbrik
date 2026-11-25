@@ -48,7 +48,57 @@ function creerFenetre() {
 }
 
 // L'application possède son propre menu (burger) : pas de barre de menus.
-Menu.setApplicationMenu(null);
+// macOS fait exception : sans menu « Édition », les raccourcis ⌘C / ⌘V / ⌘A
+// ne fonctionnent pas dans les champs de saisie. On y garde donc le menu
+// minimal attendu, en français.
+const SUR_MACOS = process.platform === "darwin";
+
+function installerMenu() {
+  if (!SUR_MACOS) {
+    Menu.setApplicationMenu(null);
+    return;
+  }
+
+  Menu.setApplicationMenu(
+    Menu.buildFromTemplate([
+      {
+        label: "Imbrik",
+        submenu: [
+          { role: "about", label: "À propos d'Imbrik" },
+          { type: "separator" },
+          { role: "hide", label: "Masquer Imbrik" },
+          { role: "hideOthers", label: "Masquer les autres" },
+          { role: "unhide", label: "Tout afficher" },
+          { type: "separator" },
+          { role: "quit", label: "Quitter Imbrik" }
+        ]
+      },
+      {
+        label: "Édition",
+        submenu: [
+          { role: "undo", label: "Annuler" },
+          { role: "redo", label: "Rétablir" },
+          { type: "separator" },
+          { role: "cut", label: "Couper" },
+          { role: "copy", label: "Copier" },
+          { role: "paste", label: "Coller" },
+          { role: "selectAll", label: "Tout sélectionner" }
+        ]
+      },
+      {
+        label: "Fenêtre",
+        submenu: [
+          { role: "minimize", label: "Réduire" },
+          { role: "zoom", label: "Agrandir" },
+          { type: "separator" },
+          { role: "front", label: "Tout ramener au premier plan" }
+        ]
+      }
+    ])
+  );
+}
+
+installerMenu();
 
 app.whenReady().then(() => {
   creerFenetre();
@@ -57,4 +107,8 @@ app.whenReady().then(() => {
   });
 });
 
-app.on("window-all-closed", () => app.quit());
+// Sur macOS, fermer la fenêtre ne quitte pas l'application : l'icône du Dock
+// la rouvre (événement « activate » ci-dessus).
+app.on("window-all-closed", () => {
+  if (!SUR_MACOS) app.quit();
+});

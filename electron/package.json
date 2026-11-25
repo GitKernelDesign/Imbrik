@@ -12,7 +12,8 @@
     "start": "electron .",
     "prep": "sh ../scripts/prepare-ui.sh",
     "build:linux": "electron-builder --linux AppImage",
-    "build:win": "electron-builder --win nsis portable"
+    "build:win": "electron-builder --win nsis portable",
+    "build:mac": "electron-builder --mac zip --x64 --arm64"
   },
   "devDependencies": {
     "electron": "45.4.1",
@@ -84,6 +85,21 @@
     "portable": {
       "artifactName": "Imbrik-${version}-x64-portable.${ext}",
       "unicode": true
+    },
+    "afterPack": "scripts/mac-sign.js",
+    "mac": {
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.png",
+      "artifactName": "Imbrik-${version}-${arch}-mac.${ext}"
     }
   }
 }

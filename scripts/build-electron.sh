@@ -2,8 +2,13 @@
 # Construit les applications Electron d'Imbrik.
 #   Linux  : AppImage
 #   Windows: installateur NSIS + version portable (construits depuis Linux)
+#   macOS  : Imbrik.app zippé, en x64 (Intel) et arm64 (Apple Silicon)
 #
-# Usage : bash scripts/build-electron.sh [linux|win|tout]
+# Les paquets macOS sont signés « ad hoc » par rcodesign (voir
+# electron/scripts/mac-sign.js) : ils démarrent sur Mac, mais ne sont pas
+# notariés par Apple.
+#
+# Usage : bash scripts/build-electron.sh [linux|win|mac|tout]
 set -e
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 CIBLE=${1:-tout}
@@ -46,6 +51,20 @@ if [ "$CIBLE" = "win" ] || [ "$CIBLE" = "tout" ]; then
     npx electron-builder --win nsis portable
 fi
 
+if [ "$CIBLE" = "mac" ] || [ "$CIBLE" = "tout" ]; then
+  echo "== macOS : Intel (x64) + Apple Silicon (arm64) =="
+  # macOS refuse un binaire non signé sur Apple Silicon : le crochet afterPack
+  # (electron/scripts/mac-sign.js) signe le paquet avec rcodesign.
+  if ! command -v rcodesign >/dev/null 2>&1 &&
+     [ ! -x "$HOME/.cargo/bin/rcodesign" ]; then
+    echo "   /!\\ rcodesign absent : paquet non signé, il ne démarrera pas" >&2
+    echo "       sur Apple Silicon. Installation :" >&2
+    echo "       cargo install apple-codesign --locked" >&2
+  fi
+  npx electron-builder --mac zip --x64 --arm64
+fi
+
 echo
 echo "Artefacts dans electron/dist :"
-ls -1 "$ROOT"/electron/dist/*.AppImage "$ROOT"/electron/dist/*.exe 2>/dev/null
+ls -1 "$ROOT"/electron/dist/*.AppImage "$ROOT"/electron/dist/*.exe \
+  "$ROOT"/electron/dist/*-mac.zip 2>/dev/null

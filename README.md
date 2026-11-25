@@ -37,22 +37,63 @@ Les applications sont empaquetées avec **Electron** à partir du fichier HTML :
 | `Imbrik-1.5.0-x64-setup.exe` | Windows 64 bits | 121 Mo | Installateur (NSIS), raccourcis menu Démarrer et bureau |
 | `Imbrik-1.5.0-x64-portable.exe` | Windows 64 bits | 110 Mo | Exécutable seul, sans installation |
 | `Imbrik-1.5.0-x86_64.AppImage` | Linux 64 bits | 126 Mo | AppImage autonome, icône et entrée de bureau intégrées |
+| `Imbrik-1.5.0-arm64-mac.zip` | macOS 13+ (Apple Silicon) | 117 Mo | `Imbrik.app` signé ad hoc, à glisser dans le dossier Applications |
+| `Imbrik-1.5.0-x64-mac.zip` | macOS 13+ (Intel) | 123 Mo | `Imbrik.app` signé ad hoc, à glisser dans le dossier Applications |
 
-Les fichiers `.exe` et `.AppImage` ne sont pas versionnés dans le dépôt : ils sont joints aux [releases](https://github.com/GitKernelDesign/Imbrik/releases).
+Les fichiers `.exe`, `.AppImage` et `.zip` ne sont pas versionnés dans le dépôt : ils sont joints aux [releases](https://github.com/GitKernelDesign/Imbrik/releases).
 
 > Dans la version de bureau, l'export d'un fichier ouvre la boîte « Enregistrer sous » du système et l'impression la boîte de dialogue d'impression, comme dans un navigateur.
+
+### macOS : première ouverture
+
+Le paquet `Imbrik.app` est signé ad hoc (aucun compte développeur Apple n'est
+utilisé) et n'est donc pas notarié : Gatekeeper le bloque au premier lancement.
+Deux façons de l'autoriser :
+
+- **Finder** : clic droit sur `Imbrik.app` → **Ouvrir** → **Ouvrir** ;
+- ou, si le bouton manque (macOS 15 et suivants), **Réglages Système →
+  Confidentialité et sécurité → « Ouvrir quand même »** ;
+
+```sh
+xattr -dr com.apple.quarantine /Applications/Imbrik.app   # après l'avoir copié
+```
+
+Sur macOS, l'application garde un menu minimal (Édition, Fenêtre) : les
+raccourcis ⌘C / ⌘V / ⌘A et ⌘Q y fonctionnent normalement, contrairement aux
+versions Windows et Linux qui n'affichent aucune barre de menus.
+
 
 ## Compilation
 
 ```sh
-bash scripts/build-electron.sh          # AppImage + installateur + portable
+bash scripts/build-electron.sh          # AppImage + installateur + portable + macOS
 bash scripts/build-electron.sh linux    # AppImage seulement
 bash scripts/build-electron.sh win      # installateur + portable seulement
+bash scripts/build-electron.sh mac      # macOS x64 + arm64 seulement
 ```
 
 Prérequis : Node.js (18 ou plus) et `electron/package.json`. Le script prépare `electron/app/index.html` depuis `Imbrik-v1.5.0.html`, installe les dépendances si besoin et laisse les artefacts dans `electron/dist/`.
 
 Les cibles Windows se construisent depuis Linux : NSIS est fourni par electron-builder, et l'extraction du désinstalleur — qui passe normalement par `wine` — est remplacée par une lecture de l'archive NSIS (`electron/scripts/wine-shim.js`). Avec `wine` installé, ce contournement n'est pas nécessaire.
+
+Les cibles macOS se construisent aussi depuis Linux, mais avec une signature
+**ad hoc** obligatoire : macOS refuse de lancer un binaire non signé sur Apple
+Silicon, et la signature d'origine d'Electron est invalidée dès qu'on ajoute
+`app.asar`. Le crochet `electron/scripts/mac-sign.js` signe donc le paquet avec
+[rcodesign](https://github.com/indygreg/apple-platform-rs) :
+
+```sh
+cargo install apple-codesign --locked     # une seule fois
+```
+
+Sans `rcodesign`, la compilation aboutit mais le `.app` n'est pas signé et ne
+démarre pas sur Apple Silicon.
+
+Pour obtenir un `.dmg` et une signature Developer ID notariée — impossible
+depuis Linux, `hdiutil` et `codesign` étant fournis par macOS — construisez sur
+un Mac avec `npm run build:mac` dans `electron/`, ou faites tourner le même
+script sur un runner `macos-latest`.
+
 
 > Le dépôt contient aussi une variante d'empaquetage Tauri dans `src-tauri/` (`scripts/build.sh`), plus légère mais qui demande les en-têtes WebKitGTK. Les applications publiées sont celles construites avec Electron.
 

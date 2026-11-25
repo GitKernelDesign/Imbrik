@@ -2,6 +2,7 @@
 *.exe
 *.AppImage
 *.dmg
+*.zip
 *.msi
 *.deb
 *.rpm
